@@ -1,0 +1,52 @@
+question,stem_image_url,option_a,option_b,option_c,option_d,option_a_image_url,option_b_image_url,option_c_image_url,option_d_image_url,correct_option,explanation,difficulty
+What is the value of π (pi) correct to 2 decimal places?,,3.12,3.14,3.16,3.18,,,,,B,,easy
+What is 15% of 200?,,15,25,30,35,,,,,C,,easy
+If x = 4, what is 3x + 2?,,10,12,14,16,,,,,C,,easy
+Solve: 8 ÷ 2 × 4,,2,4,8,16,,,,,C,,medium
+The square root of 196 is?,,10,12,14,16,,,,,C,,easy
+What is the next prime number after 17?,,18,19,21,23,,,,,B,,easy
+Simplify: 3(a + 2) − 2(a − 1),,a + 8,a + 4,a + 2,a − 4,,,,,A,,medium
+How many degrees are in a straight line?,,90°,120°,180°,360°,,,,,C,,easy
+What is the LCM of 6 and 8?,,12,18,24,48,,,,,C,,medium
+What is 7³?,,21,49,343,512,,,,,C,,medium
+What is the value of sin 90°?,,0,0.5,1,undefined,,,,,C,,medium
+The perimeter of a square with side 5 cm is?,,10 cm,15 cm,20 cm,25 cm,,,,,C,,easy
+If 2y − 4 = 10, what is y?,,3,5,7,14,,,,,B,,easy
+What is the gradient of a horizontal line?,,0,1,undefined,infinity,,,,,A,,medium
+Convert 0.75 to a fraction?,,1/2,2/3,3/4,4/5,,,,,C,,easy
+Factorize: x² − 9,,(x − 9)(x + 9),(x − 3)(x + 3),(x + 9)²,(x − 3)²,,,,,B,,medium
+What is the mode of 2, 4, 4, 5, 7, 7, 7?,,2,4,5,7,,,,,D,,easy
+Which number is a perfect cube?,,8,12,18,20,,,,,A,,easy
+If a shape has 6 faces, 12 edges, 8 vertices, it is a?,,Cube,Prism,Pyramid,Cone,,,,,A,,medium
+Area of a triangle = ?,,1/2 × base × height,base × height,length × breadth,πr²,,,,,A,,easy
+What is log₁₀(1000)?,,1,2,3,4,,,,,C,,medium
+The inverse of 5 is?,,1/5,−5,5²,0.5,,,,,A,,easy
+What is 0! (zero factorial)?,,0,1,undefined,infinity,,,,,B,,medium
+Which is irrational?,,√16,√25,√2,8/4,,,,,C,,medium
+What is the solution to |x − 5| = 3?,,2 only,8 only,2 and 8,−2 and 8,,,,,C,,medium
+The sum of interior angles of a quadrilateral is?,,180°,270°,360°,540°,,,,,C,,medium
+Expand: (x + 2)(x − 3),,x² − x − 6,x² + 6,x² + x + 6,x² − 5x − 6,,,,,A,,medium
+A line parallel to y = 3x + 1 has gradient?,,0,1,3,−3,,,,,C,,medium
+Cube root of 64 is?,,2,3,4,8,,,,,C,,easy
+What is the median of 3, 6, 9, 12, 15?,,6,9,12,15,,,,,B,,easy
+What is 4! (factorial of 4)?,,12,16,24,32,,,,,C,,easy
+If 3x = 21, x = ?,,5,6,7,8,,,,,C,,easy
+The sum of first 10 natural numbers is?,,45,50,55,60,,,,,C,,medium
+Solve: 2/3 of 15,,4,6,8,10,,,,,B,,easy
+If a:b = 2:5, then b:a = ?,,5:2,2:5,7:1,1:7,,,,,A,,easy
+Differentiate y = 3x²,,3x,6x,2x,9x,,,,,B,,medium
+What is the discriminant of ax² + bx + c?,,b² − 4ac,a² + b² + c²,b² + 4ac,4ac − b,,,,,A,,hard
+Convert 120° to radians,,2π/3,3π/2,π/4,π/6,,,,,A,,medium
+What is the VAT on ₦2000 at 7.5%?,,₦75,₦100,₦120,₦150,,,,,A,,easy
+Mean of 2, 4, 6, 8, 10 is?,,4,5,6,7,,,,,B,,easy
+If y varies directly as x and y=10 when x=5, find y when x=9,,12,15,18,20,,,,,C,,medium
+Which matrix is identity of order 2?,,[1 1;0 1],[1 0;0 1],[0 1;1 0],[2 0;0 2],,,,,B,,medium
+A polygon with 8 sides is called?,,Hexagon,Heptagon,Octagon,Nonagon,,,,,C,,easy
+The solution of 2x − 1 = 0 is?,,0.5,1,2,−1,,,,,A,,easy
+Find the 5th term of AP: 2, 5, 8, 11,…,,14,15,16,18,,,,,A,,easy
+The radius of circle is 7cm. Area is?,,49π,14π,7π,21π,,,,,A,,medium
+What is 2⁵?,,16,32,64,128,,,,,B,,easy
+If f(x)=x², f(−3)=?,,−6,6,9,−9,,,,,C,,easy
+Which of these is a Pythagorean triple?,,2,3,4,3,4,5,5,6,7,6,8,10,,,,,B,,medium
+The gradient of a vertical line is?,,0,undefined,1,infinity,,,,,B,,medium
+What is the value of cos 0°?,,0,0.5,1,undefined,,,,,C,,easy

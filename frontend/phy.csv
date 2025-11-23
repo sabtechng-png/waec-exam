@@ -1,0 +1,11 @@
+question,stem_image_url,option_a,option_b,option_c,option_d,option_a_image_url,option_b_image_url,option_c_image_url,option_d_image_url,correct_option,explanation,difficulty
+What is the unit of force?,,Newton,Joule,Watt,Pascal,,,,,A,Force is measured in Newtons (N).,easy
+Which particle has a negative charge?,,Proton,Neutron,Electron,Photon,,,,,C,Electrons carry negative charge.,easy
+Acceleration due to gravity on Earth is?,,9.8 m/s^2,3.5 m/s^2,6 m/s^2,12 m/s^2,,,,,A,Standard value used in Physics,medium
+,force_diagram.png,10N,15N,20N,25N,,,,,B,The diagram represents a 15N force.,medium
+What is the SI unit of power?,,Joule,Watt,Ohm,Volt,,,,,B,Power = Joules per second = Watts,medium
+,velocity_graph.png,Constant Velocity,Acceleration,Deceleration,Rest,,,,,A,Graph shows horizontal line so speed is constant,medium
+The device used to measure electric current is?,,Voltmeter,Barometer,Ammeter,Thermometer,,,,,C,Ammeter measures current in amperes,medium
+,ohms_law.png,5V,10V,15V,20V,,,,,C,V = IR,medium
+Which law states that pressure is inversely proportional to volume?,,Boyle's Law,Charles' Law,Newton's Law,Pascal's Law,,,,,A,,medium
+In a vacuum, all electromagnetic waves travel at?,,3×10^5 m/s,3×10^8 m/s,3×10^6 m/s,3×10^3 m/s,,,,,B,Speed of light in vacuum,medium
