@@ -6,7 +6,8 @@ import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import Navbar from "../components/Navbar";
 import { Footer } from "../components/Footer";
 import { Helmet } from "react-helmet"; // ⭐ ADDED
-
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5185850033939140"
+     crossorigin="anonymous"></script>
 export default function LandingPage() {
   // Hardcoded content
   const subjects = ["Math", "Physics", "Chemistry", "Biology", "English", "Geography"];
