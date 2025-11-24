@@ -1,8 +1,11 @@
 import axios from "axios";
 import { logoutOn401 } from "./authHelpers";
 
-const API_BASE_URL =
-  process.env.REACT_APP_API_URL || "http://localhost:4000";
+export const API_BASE_URL = 
+  process.env.NODE_ENV === "production"
+    ? "https://waec-exam.onrender.com"
+    : "http://localhost:3000";
+
 
 const api = axios.create({
   baseURL: API_BASE_URL,
