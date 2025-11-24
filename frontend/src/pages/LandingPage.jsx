@@ -27,9 +27,14 @@ export default function LandingPage() {
   ];
 
   return (
+<Helmet>
+  <script
+    async
+    src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5185850033939140"
+    crossOrigin="anonymous"
+  ></script>
+</Helmet>
 
-       <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5185850033939140"
-     crossorigin="anonymous"></script>
     <Box sx={{ bgcolor: "#f7f9fc", minHeight: "100vh" }}>
       {/* ==================== TAWK.TO SCRIPT VIA HELMET ===================== */}
       <Helmet>
