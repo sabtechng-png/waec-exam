@@ -114,4 +114,36 @@ router.patch("/:examId/answer", auth, async (req, res) => {
   }
 });
 
+
+// =============================================================
+// LOAD SAVED ANSWER FOR A QUESTION
+// GET /exam/:examId/answer/:questionId
+// =============================================================
+router.get("/:examId/answer/:questionId", auth, async (req, res) => {
+  const studentId = req.user.userId;
+  const { examId, questionId } = req.params;
+
+  try {
+    const ans = await pool.query(
+      `SELECT selected_option, flagged
+         FROM exam_answers
+        WHERE exam_id=$1 AND student_id=$2 AND question_id=$3
+        LIMIT 1`,
+      [examId, studentId, questionId]
+    );
+
+    if (!ans.rowCount) {
+      return res.json({
+        selected_option: null,
+        flagged: false
+      });
+    }
+
+    return res.json(ans.rows[0]);
+  } catch (err) {
+    console.error("🔥 LOAD ANSWER ERROR:", err);
+    return res.status(500).json({ message: "Failed to load saved answer" });
+  }
+});
+
 module.exports = router;

@@ -38,6 +38,7 @@ export default function AdminLayout() {
     { label: "Manage Users", to: "/admin/users", icon: "settings" },
     { label: "Subjects", to: "/admin/subjects", icon: "subjects" },
     { label: "Upload Questions", to: "/admin/questions", icon: "practice" },
+	  { label: "Manage Questions", to: "/admin/manage-questions", icon: "practice" },
     { label: "Analytics", to: "/admin/analytics", icon: "leaderboard" },
     { label: "Logout", to: "/logout", icon: "logout" },
   ];

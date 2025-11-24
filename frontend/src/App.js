@@ -41,6 +41,8 @@ import UploadQuestionsPage from "./pages/admin/UploadQuestionsPage";
 import ManageSubjectsPage from "./pages/admin/ManageSubjectsPage";
 import AdminManageUsers from "./pages/admin/AdminManageUsers";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
+import AdminQuestionsPage from "./pages/admin/AdminQuestionsPage";
+
 
 
 // ---------- Exam Pages ----------
@@ -80,6 +82,8 @@ export default function App() {
             <Route path="subjects" element={<ManageSubjectsPage />} />
 			<Route path="questions" element={<UploadQuestionsPage />} />
 			<Route path="analytics" element={<AdminAnalytics />} />
+			<Route path="manage-questions" element={<AdminQuestionsPage />} />
+
 			</Route>
 
           {/* ======================= */}

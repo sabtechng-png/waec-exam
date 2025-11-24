@@ -31,12 +31,17 @@ cleanupUnverifiedUsers();
 // =======================================================
 // 🌐 GLOBAL MIDDLEWARE
 // =======================================================
-app.use(cors({
-  //origin: "http://localhost:3000",
-origin: 'http://localhost:3000' || 'https://cbt-master.com.ng',  // Adjust to your frontend URL
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: "http://localhost:3000",         // your React app
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  })
+);
+
+
+
 
 app.use(express.json());
 
@@ -57,10 +62,17 @@ app.use("/admin/users", require("./routes/adminUsersRoutes"));
 app.use("/landing", require("./routes/landingRoutes"));
 app.use("/admin/subjects", require("./routes/adminSubjectsRoutes"));
 app.use("/admin/uploads", require("./routes/adminUploadsRoutes"));
-app.use("/admin/questions", require("./routes/adminQuestionsRoutes"));
+//app.use("/admin/questions", require("./routes/adminQuestionsRoutes"));
 app.use("/leaderboard", require("./routes/exam/leaderboardRoutes"));
 app.use("/user", require("./routes/user/updateProfile"));
 app.use("/contact", require("./routes/contactRoutes"));
+
+
+
+app.use("/admin/questions", require("./routes/questionsManageRoutes"));
+app.use("/admin/questions", require("./routes/questionsUploadRoutes"));
+app.use("/admin/questions", require("./routes/questionsBulkOpsRoutes"));
+
 
 // =======================================================
 // 🎓 STUDENT ROUTES

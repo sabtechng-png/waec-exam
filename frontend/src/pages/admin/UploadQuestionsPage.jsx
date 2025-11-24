@@ -1,11 +1,5 @@
 // =============================================
-// File: src/pages/admin/UploadQuestionsPage.jsx
-// Mode: Single-Subject Bulk Upload (CSV + optional ZIP)
-// - Subject is selected via dropdown (required)
-// - CSV header (single-subject):
-//   question,stem_image_url,option_a,option_b,option_c,option_d,option_a_image_url,option_b_image_url,option_c_image_url,option_d_image_url,correct_option,explanation,difficulty
-// - Backend expects fields: subject_id, file (CSV), images_zip (optional)
-// - Template buttons auto-target /templates/<SUBJECT_CODE>.csv and .zip
+// UploadQuestionsPage.jsx  (UPDATED, CLEAN VERSION)
 // =============================================
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -27,17 +21,16 @@ import {
   IconButton,
   Tooltip,
 } from "@mui/material";
+
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ImageIcon from "@mui/icons-material/Image";
 import DownloadIcon from "@mui/icons-material/Download";
+
 import api from "../../utils/api";
 
-// ---------------------------------------------
-// Utility: Read file to dataURL for preview
-// ---------------------------------------------
 const fileToDataUrl = (file) =>
   new Promise((res, rej) => {
     const r = new FileReader();
@@ -47,7 +40,7 @@ const fileToDataUrl = (file) =>
   });
 
 // ---------------------------------------------
-// SubjectSelect: fetch subjects (id, name, code, status)
+// Subject Select dropdown
 // ---------------------------------------------
 function SubjectSelect({ value, onChange, label = "Subject", fullWidth = true, onLoaded }) {
   const [loading, setLoading] = useState(false);
@@ -63,7 +56,7 @@ function SubjectSelect({ value, onChange, label = "Subject", fullWidth = true, o
         const arr = (r.data?.subjects || r.data || []).map((s) => ({
           id: s.id,
           name: s.name,
-          code: s.code || (s.name ? (s.name.match(/[A-Za-z]/g) || []).join("").slice(0,3).toUpperCase() : ""),
+          code: s.code?.toUpperCase() || "",
           status: s.status !== false,
         }));
         setOptions(arr);
@@ -71,7 +64,7 @@ function SubjectSelect({ value, onChange, label = "Subject", fullWidth = true, o
       })
       .finally(() => setLoading(false));
     return () => (mounted = false);
-  }, [onLoaded]);
+  }, []);
 
   return (
     <TextField
@@ -93,8 +86,7 @@ function SubjectSelect({ value, onChange, label = "Subject", fullWidth = true, o
 }
 
 // ---------------------------------------------
-// ImageUploadField: drag & drop + preview + upload to server
-// POST /admin/uploads/image  -> { url }
+// Image Upload for STEM IMAGE ONLY
 // ---------------------------------------------
 function ImageUploadField({ label = "Upload Image", value, onChange }) {
   const inputRef = useRef(null);
@@ -103,12 +95,13 @@ function ImageUploadField({ label = "Upload Image", value, onChange }) {
 
   useEffect(() => { setPreview(value || ""); }, [value]);
 
-  const onPick = () => inputRef.current?.click();
+  const pick = () => inputRef.current?.click();
 
   const handleFile = async (file) => {
     if (!file) return;
     const dataUrl = await fileToDataUrl(file);
     setPreview(dataUrl);
+
     try {
       setUploading(true);
       const fd = new FormData();
@@ -118,113 +111,155 @@ function ImageUploadField({ label = "Upload Image", value, onChange }) {
       });
       if (data?.url) onChange?.(data.url);
       else onChange?.(dataUrl);
-    } catch (e) {
+    } catch {
       onChange?.(dataUrl);
     } finally {
       setUploading(false);
     }
   };
 
-  const onDrop = async (e) => { e.preventDefault(); const file = e.dataTransfer.files?.[0]; if (file) await handleFile(file); };
-  const onFileInput = async (e) => { const file = e.target.files?.[0]; if (file) await handleFile(file); e.target.value = ""; };
-  const clear = () => { setPreview(""); onChange?.(""); };
+  const onFileInput = async (e) => {
+    const f = e.target.files?.[0];
+    if (f) await handleFile(f);
+    e.target.value = "";
+  };
+
+  const clearPreview = () => {
+    setPreview("");
+    onChange?.("");
+  };
 
   return (
     <Box>
       <Typography variant="overline" color="text.secondary">{label}</Typography>
+
       <Paper
         variant="outlined"
-        sx={{ mt: 0.5, p: 2, borderRadius: 3, display: "flex", alignItems: "center", gap: 2, cursor: "pointer", borderStyle: "dashed", bgcolor: preview ? "#fafafa" : "inherit" }}
-        onClick={onPick}
-        onDragOver={(e) => e.preventDefault()}
-        onDrop={onDrop}
+        sx={{
+          mt: 0.5,
+          p: 2,
+          borderRadius: 3,
+          display: "flex",
+          alignItems: "center",
+          gap: 2,
+          cursor: "pointer",
+          borderStyle: "dashed",
+          bgcolor: preview ? "#fafafa" : "inherit",
+        }}
+        onClick={pick}
       >
         {preview ? (
-          <img src={preview} alt="preview" style={{ width: 96, height: 96, objectFit: "contain", borderRadius: 8 }} />
+          <img src={preview} alt="preview" style={{ width: 96, height: 96, objectFit: "contain" }} />
         ) : (
           <ImageIcon />
         )}
+
         <Stack spacing={0.5} sx={{ flex: 1 }}>
-          <Typography variant="body2" fontWeight={600}>{preview ? "Image selected" : label}</Typography>
-          <Typography variant="caption" color="text.secondary">Drag & drop or click to choose. PNG/JPEG/WebP up to 5MB.</Typography>
+          <Typography variant="body2">
+            {preview ? "Image selected" : label}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            Drag/click to upload (PNG/JPEG/WebP)
+          </Typography>
         </Stack>
+
         {preview && (
-          <Tooltip title="Remove image">
-            <span><IconButton onClick={clear} disabled={uploading}><DeleteIcon /></IconButton></span>
+          <Tooltip title="Clear image">
+            <IconButton onClick={clearPreview}><DeleteIcon /></IconButton>
           </Tooltip>
         )}
-        <input ref={inputRef} type="file" accept="image/*" hidden onChange={onFileInput} />
+
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={onFileInput}
+        />
       </Paper>
+
       {uploading && <LinearProgress sx={{ mt: 1 }} />}
     </Box>
   );
 }
 
-// ---------------------------------------------
-// SingleQuestionForm (unchanged for now)
-// ---------------------------------------------
+// =====================================================
+// SINGLE QUESTION FORM
+// =====================================================
 function SingleQuestionForm() {
-  const [toast, setToast] = useState({ open: false, msg: "", severity: "info" });
-  const [saving, setSaving] = useState(false);
-
-  const [subjects, setSubjects] = useState([]);
   const [subjectId, setSubjectId] = useState("");
-
   const [form, setForm] = useState({
-    difficulty: "medium",
     question: "",
-    stem_image_url: "",
-    explanation: "",
+    option_a: "",
+    option_b: "",
+    option_c: "",
+    option_d: "",
     correct_option: "A",
-    options: {
-      A: { text: "", image_url: "" },
-      B: { text: "", image_url: "" },
-      C: { text: "", image_url: "" },
-      D: { text: "", image_url: "" },
-    },
+    explanation: "",
+    difficulty: "medium",
+    stem_image_url: "",
   });
 
+  const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState({ open: false, msg: "", severity: "info" });
+
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
-  const isOptionValid = (opt) => !!(opt.text?.trim() || opt.image_url?.trim());
 
   const isValid = useMemo(() => {
     if (!subjectId) return false;
-    if (!form.question?.trim() && !form.stem_image_url?.trim()) return false;
-    const { A, B, C, D } = form.options;
-    if (![A, B, C, D].every(isOptionValid)) return false;
+    if (!form.question?.trim()) return false;
+    if (!form.option_a?.trim() ||
+        !form.option_b?.trim() ||
+        !form.option_c?.trim() ||
+        !form.option_d?.trim()) return false;
     if (!"ABCD".includes(form.correct_option)) return false;
     return true;
   }, [form, subjectId]);
 
-  const handleSubmit = async (e) => {
+  const submit = async (e) => {
     e?.preventDefault?.();
-    if (!isValid) { setToast({ open: true, msg: "Please complete all required fields.", severity: "error" }); return; }
+    if (!isValid) {
+      setToast({ open: true, msg: "Fill all required fields.", severity: "error" });
+      return;
+    }
 
     const payload = {
       subject_id: subjectId,
-      difficulty: form.difficulty,
       question: form.question,
-      stem_image_url: form.stem_image_url || null,
-      explanation: form.explanation || null,
-      option_a: form.options.A.text || null,
-      option_b: form.options.B.text || null,
-      option_c: form.options.C.text || null,
-      option_d: form.options.D.text || null,
-      option_a_image_url: form.options.A.image_url || null,
-      option_b_image_url: form.options.B.image_url || null,
-      option_c_image_url: form.options.C.image_url || null,
-      option_d_image_url: form.options.D.image_url || null,
+      option_a: form.option_a,
+      option_b: form.option_b,
+      option_c: form.option_c,
+      option_d: form.option_d,
       correct_option: form.correct_option,
+      explanation: form.explanation,
+      difficulty: form.difficulty,
+      stem_image_url: form.stem_image_url || null,
     };
 
     try {
       setSaving(true);
       await api.post("/admin/questions", payload);
-      setToast({ open: true, msg: "Question saved successfully!", severity: "success" });
-      setForm((f) => ({ ...f, question: "", stem_image_url: "", explanation: "", options: { A: { text: "", image_url: "" }, B: { text: "", image_url: "" }, C: { text: "", image_url: "" }, D: { text: "", image_url: "" } }, }));
+      setToast({ open: true, msg: "Saved successfully", severity: "success" });
+
+      // reset form
+      setForm({
+        question: "",
+        option_a: "",
+        option_b: "",
+        option_c: "",
+        option_d: "",
+        correct_option: "A",
+        explanation: "",
+        difficulty: "medium",
+        stem_image_url: "",
+      });
+
     } catch (e) {
-      const msg = e?.response?.data?.message || "Failed to save question.";
-      setToast({ open: true, msg, severity: "error" });
+      setToast({
+        open: true,
+        msg: e?.response?.data?.message || "Failed to save.",
+        severity: "error",
+      });
     } finally {
       setSaving(false);
     }
@@ -232,221 +267,236 @@ function SingleQuestionForm() {
 
   return (
     <Paper variant="outlined" sx={{ p: 3, borderRadius: 3 }}>
-      <Stack component="form" spacing={2} onSubmit={handleSubmit}>
-        <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-          <SubjectSelect value={subjectId} onChange={setSubjectId} label="Select Subject (required)" onLoaded={setSubjects} />
-          <TextField select label="Difficulty" value={form.difficulty} onChange={(e) => set({ difficulty: e.target.value })} sx={{ minWidth: 200 }}>
-            <MenuItem value="easy">Easy</MenuItem>
-            <MenuItem value="medium">Medium</MenuItem>
-            <MenuItem value="hard">Hard</MenuItem>
-          </TextField>
-        </Stack>
+      <Stack spacing={2} onSubmit={submit} component="form">
 
-        <TextField label="Question (text)" value={form.question} onChange={(e) => set({ question: e.target.value })} multiline minRows={3} fullWidth />
-        <ImageUploadField label="Question Image (optional)" value={form.stem_image_url} onChange={(url) => set({ stem_image_url: url })} />
+        <SubjectSelect value={subjectId} onChange={setSubjectId} />
+
+        <TextField
+          label="Question"
+          value={form.question}
+          onChange={(e) => set({ question: e.target.value })}
+          multiline minRows={3}
+          fullWidth
+        />
+
+        <ImageUploadField
+          label="Question Image (optional)"
+          value={form.stem_image_url}
+          onChange={(url) => set({ stem_image_url: url })}
+        />
 
         <Divider />
-        <Typography variant="subtitle2" color="text.secondary">Options (mark exactly one as correct)</Typography>
 
-        <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-          {(["A","B","C","D"]).map((l) => (
-            <Chip key={l} label={`Correct: ${l}`} color={form.correct_option===l?"primary":"default"} onClick={() => set({ correct_option: l })} variant={form.correct_option===l?"filled":"outlined"} />
+        <Typography variant="subtitle2">Options (mark one correct)</Typography>
+
+        <Stack direction="row" spacing={2}>
+          {["A", "B", "C", "D"].map((l) => (
+            <Chip
+              key={l}
+              label={`Correct: ${l}`}
+              color={form.correct_option === l ? "primary" : "default"}
+              onClick={() => set({ correct_option: l })}
+            />
           ))}
         </Stack>
 
-        {(["A","B","C","D"]).map((l) => (
-          <Paper key={l} variant="outlined" sx={{ p:2, borderRadius:2 }}>
-            <Stack direction={{ xs:"column", md:"row" }} spacing={2} alignItems="flex-start">
-              <TextField label={`Option ${l} (text)`} value={form.options[l].text} onChange={(e) => set({ options: { ...form.options, [l]: { ...form.options[l], text: e.target.value } } })} fullWidth />
-              <ImageUploadField label={`Option ${l} Image`} value={form.options[l].image_url} onChange={(url) => set({ options: { ...form.options, [l]: { ...form.options[l], image_url: url } } })} />
-            </Stack>
-          </Paper>
+        {["A", "B", "C", "D"].map((l) => (
+          <TextField
+            key={l}
+            label={`Option ${l}`}
+            value={form[`option_${l.toLowerCase()}`]}
+            onChange={(e) => set({ [`option_${l.toLowerCase()}`]: e.target.value })}
+            fullWidth
+          />
         ))}
 
-        <TextField label="Explanation (optional)" value={form.explanation} onChange={(e) => set({ explanation: e.target.value })} multiline minRows={2} fullWidth />
+        <TextField
+          label="Explanation (optional)"
+          value={form.explanation}
+          onChange={(e) => set({ explanation: e.target.value })}
+          multiline minRows={2}
+        />
 
-        <Stack direction="row" spacing={1.5}>
-          <Button type="button" variant="outlined" onClick={() => window.history.back()}>Cancel</Button>
-          <Button type="submit" variant="contained" startIcon={<CheckCircleIcon />} disabled={!isValid || saving}>
-            {saving ? "Saving..." : "Save Question"}
+        <TextField
+          select
+          label="Difficulty"
+          value={form.difficulty}
+          onChange={(e) => set({ difficulty: e.target.value })}
+          sx={{ width: 200 }}
+        >
+          <MenuItem value="easy">Easy</MenuItem>
+          <MenuItem value="medium">Medium</MenuItem>
+          <MenuItem value="hard">Hard</MenuItem>
+        </TextField>
+
+        <Stack direction="row" spacing={2}>
+          <Button variant="outlined" onClick={() => window.history.back()}>
+            Cancel
+          </Button>
+
+          <Button type="submit" variant="contained" startIcon={<CheckCircleIcon />}
+            disabled={!isValid || saving}>
+            {saving ? "Saving..." : "Save"}
           </Button>
         </Stack>
+
       </Stack>
 
-      <Snackbar open={toast.open} autoHideDuration={4000} onClose={() => setToast((t) => ({ ...t, open: false }))} anchorOrigin={{ vertical: "top", horizontal: "center" }}>
-        <Alert severity={toast.severity} variant="filled" onClose={() => setToast((t) => ({ ...t, open: false }))}>{toast.msg}</Alert>
+      <Snackbar
+        open={toast.open}
+        autoHideDuration={4000}
+        onClose={() => setToast((t) => ({ ...t, open: false }))}
+      >
+        <Alert severity={toast.severity}>{toast.msg}</Alert>
       </Snackbar>
     </Paper>
   );
 }
 
-// ---------------------------------------------
-// BulkUploadPanel (SINGLE SUBJECT MODE)
-// - Requires subject_id
-// - Accepts CSV (file) and optional ZIP (images_zip)
-// - Shows template buttons for selected subject code
-// ---------------------------------------------
+// =====================================================
+// BULK UPLOAD PANEL
+// =====================================================
 function BulkUploadPanel() {
   const [subjectId, setSubjectId] = useState("");
-  const [subjects, setSubjects] = useState([]); // [{id,name,code,status}]
+  const [subjects, setSubjects] = useState([]);
   const [csvFile, setCsvFile] = useState(null);
   const [zipFile, setZipFile] = useState(null);
+  const [preview, setPreview] = useState([]);
+
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState({ open: false, msg: "", severity: "info" });
-  const [preview, setPreview] = useState([]);
-  const [templateExists, setTemplateExists] = useState({ csv:false, zip:false });
 
-  const selected = useMemo(() => subjects.find((s) => s.id === subjectId) || null, [subjects, subjectId]);
+  const selected = useMemo(
+    () => subjects.find((s) => s.id === subjectId) || null,
+    [subjects, subjectId]
+  );
 
-  // check if template files exist in /templates/<CODE>.csv and .zip
-  useEffect(() => {
-    let cancelled = false;
-    async function check(url) {
-      try {
-        const r = await fetch(url, { method: "HEAD" });
-        return r.ok;
-      } catch {
-        return false;
-      }
+  const pickCsv = (e) => {
+    const f = e.target.files?.[0];
+    setCsvFile(f || null);
+    if (f) {
+      f.text().then((txt) => setPreview(txt.split(/\r?\n/).slice(0, 6)));
     }
-    (async () => {
-      if (!selected?.code) { setTemplateExists({ csv:false, zip:false }); return; }
-      const base = `/templates/${selected.code.toUpperCase()}`;
-      const [csvOk, zipOk] = await Promise.all([check(`${base}.csv`), check(`${base}.zip`)]);
-      if (!cancelled) setTemplateExists({ csv: csvOk, zip: zipOk });
-    })();
-    return () => { cancelled = true; };
-  }, [selected]);
-
-  const parseCsvPreview = async (file) => {
-    try {
-      const text = await file.text();
-      const lines = text.split(/\r?\n/).slice(0, 6); // header + first 5 rows
-      setPreview(lines);
-    } catch { setPreview([]); }
+    e.target.value = "";
   };
 
-  const onPickCsv = (e) => { const f = e.target.files?.[0]; setCsvFile(f || null); if (f && f.type.includes("csv")) parseCsvPreview(f); e.target.value = ""; };
-  const onPickZip = (e) => { const f = e.target.files?.[0]; setZipFile(f || null); e.target.value = ""; };
+  const pickZip = (e) => {
+    const f = e.target.files?.[0];
+    setZipFile(f || null);
+    e.target.value = "";
+  };
 
-  const onUpload = async () => {
-    if (!subjectId) { setToast({ open: true, msg: "Please select a subject.", severity: "error" }); return; }
-    if (!csvFile) { setToast({ open: true, msg: "Please choose a CSV file.", severity: "error" }); return; }
+  const uploadNow = async () => {
+    if (!subjectId) {
+      setToast({ open: true, msg: "Select a subject", severity: "error" });
+      return;
+    }
+    if (!csvFile) {
+      setToast({ open: true, msg: "Select a CSV file", severity: "error" });
+      return;
+    }
+
     try {
       setBusy(true);
       const fd = new FormData();
       fd.append("subject_id", subjectId);
       fd.append("file", csvFile);
       if (zipFile) fd.append("images_zip", zipFile);
-      const { data } = await api.post("/admin/questions/upload", fd, { headers: { "Content-Type": "multipart/form-data" } });
-      const msg = data?.message || `Upload finished. Inserted: ${data?.inserted ?? "?"}, Skipped: ${data?.skipped ?? 0}`;
-      setToast({ open: true, msg, severity: "success" });
-      setCsvFile(null); setZipFile(null); setPreview([]);
-    } catch (e) {
-      const msg = e?.response?.data?.message || "Upload failed.";
-      setToast({ open: true, msg, severity: "error" });
-    } finally { setBusy(false); }
-  };
 
-  const downloadTemplate = (kind) => {
-    if (!selected?.code) return;
-    const url = `/templates/${selected.code.toUpperCase()}.${kind}`;
-    const a = document.createElement("a");
-    a.href = url; a.download = `${selected.code.toUpperCase()}.${kind}`; a.style.display = "none";
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      const r = await api.post("/admin/questions/upload", fd, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      setToast({
+        open: true,
+        msg: r.data?.message || "Upload completed",
+        severity: "success",
+      });
+
+      setCsvFile(null);
+      setZipFile(null);
+      setPreview([]);
+
+    } catch (e) {
+      setToast({
+        open: true,
+        msg: e?.response?.data?.message || "Upload failed",
+        severity: "error",
+      });
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
     <Paper variant="outlined" sx={{ p: 3, borderRadius: 3 }}>
+
       <Stack spacing={2}>
-        <Typography variant="subtitle1" fontWeight={700}>Bulk Upload (CSV + optional ZIP)</Typography>
-        <Typography variant="body2" color="text.secondary">
-          Select a subject, attach a CSV, and optionally attach a ZIP of images referenced by filename. CSV should not contain subject_code.
-        </Typography>
 
-        <SubjectSelect value={subjectId} onChange={setSubjectId} label="Select Subject (required — CSV has no subject_code)" onLoaded={setSubjects} />
+        <SubjectSelect
+          value={subjectId}
+          onChange={setSubjectId}
+          onLoaded={setSubjects}
+        />
 
-        <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-          <Button component="label" variant="outlined" startIcon={<UploadFileIcon />}>Choose CSV
-            <input hidden type="file" accept=".csv" onChange={onPickCsv} />
+        <Stack direction="row" spacing={2}>
+          <Button component="label" variant="outlined" startIcon={<UploadFileIcon />}>
+            Choose CSV
+            <input hidden type="file" accept=".csv" onChange={pickCsv} />
           </Button>
-          <Button component="label" variant="outlined" startIcon={<UploadFileIcon />}>Optional Images ZIP
-            <input hidden type="file" accept=".zip, application/x-zip-compressed" onChange={onPickZip} />
+
+          <Button component="label" variant="outlined" startIcon={<UploadFileIcon />}>
+            Optional ZIP
+            <input hidden type="file" accept=".zip" onChange={pickZip} />
           </Button>
-          <Button variant="contained" startIcon={<CloudUploadIcon />} disabled={busy} onClick={onUpload}>
-            {busy ? "Uploading..." : "Upload Questions"}
+
+          <Button
+            variant="contained"
+            startIcon={<CloudUploadIcon />}
+            onClick={uploadNow}
+            disabled={busy}
+          >
+            {busy ? "Uploading..." : "Upload"}
           </Button>
         </Stack>
 
-        {/* Template buttons next to upload controls */}
-        {selected?.code && (
-          <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-            <Tooltip title={templateExists.csv ? `Download ${selected.name} CSV template` : "Template not available yet"}>
-              <span>
-                <Button variant="text" startIcon={<DownloadIcon />} disabled={!templateExists.csv} onClick={() => downloadTemplate("csv")}>
-                  Download {selected.name} CSV Template
-                </Button>
-              </span>
-            </Tooltip>
-            <Tooltip title={templateExists.zip ? `Download ${selected.name} ZIP template` : "Template not available yet"}>
-              <span>
-                <Button variant="text" startIcon={<DownloadIcon />} disabled={!templateExists.zip} onClick={() => downloadTemplate("zip")}>
-                  Download {selected.name} ZIP Template
-                </Button>
-              </span>
-            </Tooltip>
-          </Stack>
-        )}
-
-        {csvFile && (
-          <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <Typography variant="subtitle2">Selected file:</Typography>
-              <Chip label={csvFile.name} />
-              {zipFile && <Chip label={`ZIP: ${zipFile.name}`} />}
-            </Stack>
-            {preview.length > 0 && (
-              <Box sx={{ mt: 1 }}>
-                <Typography variant="caption" color="text.secondary">Preview (first lines)</Typography>
-                <Paper variant="outlined" sx={{ p: 1, mt: 0.5, bgcolor: "#fafafa", fontFamily: "monospace", whiteSpace: "pre-wrap" }}>
-                  {preview.join("\n")}
-                </Paper>
-              </Box>
-            )}
+        {preview.length > 0 && (
+          <Paper variant="outlined" sx={{ p: 2, bgcolor: "#fafafa" }}>
+            <Typography variant="caption">Preview (first lines)</Typography>
+            <pre style={{ margin: 0, whiteSpace: "pre-wrap" }}>
+              {preview.join("\n")}
+            </pre>
           </Paper>
         )}
 
-        <Stack direction="row" spacing={1.5}>
-          <Button variant="outlined" onClick={() => { setCsvFile(null); setZipFile(null); setPreview([]); }}>Cancel</Button>
-          <Button variant="contained" startIcon={<CloudUploadIcon />} disabled={busy || !csvFile} onClick={onUpload}>
-            {busy ? "Uploading..." : "Upload All"}
-          </Button>
-        </Stack>
       </Stack>
 
-      <Snackbar open={toast.open} autoHideDuration={4000} onClose={() => setToast((t) => ({ ...t, open: false }))} anchorOrigin={{ vertical: "top", horizontal: "center" }}>
-        <Alert severity={toast.severity} variant="filled" onClose={() => setToast((t) => ({ ...t, open: false }))}>{toast.msg}</Alert>
+      <Snackbar
+        open={toast.open}
+        autoHideDuration={4000}
+        onClose={() => setToast((t) => ({ ...t, open: false }))}
+      >
+        <Alert severity={toast.severity}>{toast.msg}</Alert>
       </Snackbar>
+
     </Paper>
   );
 }
 
-// ---------------------------------------------
-// Main Page: UploadQuestionsPage
-// ---------------------------------------------
+// =====================================================
+// MAIN PAGE
+// =====================================================
 export default function UploadQuestionsPage() {
-  const [tab, setTab] = useState(1); // default user likely uses Bulk first
+  const [tab, setTab] = useState(1);
 
   return (
     <Box>
-      <Typography variant="h5" fontWeight={800} sx={{ mb: 1 }}>
-        Upload Questions
-      </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        Single-subject uploads only. Attach a CSV (and optional ZIP of images). Images referenced by filename will be mapped automatically.
+      <Typography variant="h5" fontWeight={700}>Upload Questions</Typography>
+      <Typography variant="body2" color="text.secondary">
+        Upload using CSV (single subject) or manually add single questions.
       </Typography>
 
-      <Paper variant="outlined" sx={{ borderRadius: 3 }}>
+      <Paper variant="outlined" sx={{ mt: 2, borderRadius: 3 }}>
         <Tabs value={tab} onChange={(_e, v) => setTab(v)} variant="fullWidth">
           <Tab label="Single Question" />
           <Tab label="Bulk Upload (CSV/ZIP)" />
@@ -460,7 +510,10 @@ export default function UploadQuestionsPage() {
 
       <Box sx={{ mt: 3 }}>
         <Alert severity="info">
-          CSV header (single subject): <b>question, stem_image_url, option_a, option_b, option_c, option_d, option_a_image_url, option_b_image_url, option_c_image_url, option_d_image_url, correct_option, explanation, difficulty</b>.
+          CSV Header: <b>
+            question, option_a, option_b, option_c, option_d,
+            correct_option, explanation, difficulty, stem_image_url
+          </b>
         </Alert>
       </Box>
     </Box>
