@@ -5,68 +5,45 @@
 
   <!-- MAIN PAGES -->
   <url>
-    <loc>https://cbt-master.com.ng/</loc>
+    <loc>https://www.cbt-master.com.ng/</loc>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
 
   <url>
-    <loc>https://cbt-master.com.ng/about</loc>
-    <priority>0.8</priority>
+    <loc>https://www.cbt-master.com.ng/about</loc>
+  </url>
+  <url>
+    <loc>https://www.cbt-master.com.ng/contact</loc>
+  </url>
+  <url>
+    <loc>https://www.cbt-master.com.ng/faq</loc>
+  </url>
+  <url>
+    <loc>https://www.cbt-master.com.ng/privacy-policy</loc>
+  </url>
+  <url>
+    <loc>https://www.cbt-master.com.ng/terms</loc>
   </url>
 
-  <url>
-    <loc>https://cbt-master.com.ng/contact</loc>
-    <priority>0.8</priority>
-  </url>
+  <!-- SUBJECT PAGES -->
+  <url><loc>https://www.cbt-master.com.ng/waec</loc></url>
+  <url><loc>https://www.cbt-master.com.ng/jamb</loc></url>
+  <url><loc>https://www.cbt-master.com.ng/neco</loc></url>
 
+  <!-- BLOG HOME -->
   <url>
-    <loc>https://cbt-master.com.ng/faq</loc>
-    <priority>0.7</priority>
-  </url>
-
-  <url>
-    <loc>https://cbt-master.com.ng/privacy</loc>
-    <priority>0.7</priority>
-  </url>
-
-  <url>
-    <loc>https://cbt-master.com.ng/terms</loc>
-    <priority>0.7</priority>
-  </url>
-
-  <url>
-    <loc>https://cbt-master.com.ng/blog</loc>
+    <loc>https://www.cbt-master.com.ng/blog</loc>
     <priority>0.9</priority>
   </url>
 
   <!-- BLOG ARTICLES -->
-  <url>
-    <loc>https://cbt-master.com.ng/blog/how-to-pass-jamb</loc>
-  </url>
-
-  <url>
-    <loc>https://cbt-master.com.ng/blog/waec-physics-tips</loc>
-  </url>
-
-  <url>
-    <loc>https://cbt-master.com.ng/blog/study-techniques</loc>
-  </url>
-
-  <url>
-    <loc>https://cbt-master.com.ng/blog/waec-english-guide</loc>
-  </url>
-
-  <url>
-    <loc>https://cbt-master.com.ng/blog/waec-maths-guide</loc>
-  </url>
-
-  <url>
-    <loc>https://cbt-master.com.ng/blog/study-motivation</loc>
-  </url>
-
-  <url>
-    <loc>https://cbt-master.com.ng/blog/career-guide</loc>
-  </url>
+  <url><loc>https://www.cbt-master.com.ng/blog/how-to-pass-jamb</loc></url>
+  <url><loc>https://www.cbt-master.com.ng/blog/waec-physics-tips</loc></url>
+  <url><loc>https://www.cbt-master.com.ng/blog/study-techniques</loc></url>
+  <url><loc>https://www.cbt-master.com.ng/blog/waec-english-guide</loc></url>
+  <url><loc>https://www.cbt-master.com.ng/blog/waec-maths-guide</loc></url>
+  <url><loc>https://www.cbt-master.com.ng/blog/study-motivation</loc></url>
+  <url><loc>https://www.cbt-master.com.ng/blog/career-guide</loc></url>
 
 </urlset>

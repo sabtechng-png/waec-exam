@@ -1,5 +1,15 @@
 User-agent: *
 Allow: /
 
-# Where the sitemap is
-Sitemap: https://cbt-master.com.ng/sitemap.xml
+# Prevent crawling of internal dashboard routes
+Disallow: /dashboard/
+Disallow: /admin/
+
+# Allow blog, pages, exams
+Allow: /blog/
+Allow: /waec/
+Allow: /jamb/
+Allow: /neco/
+
+# Sitemap location
+Sitemap: https://www.cbt-master.com.ng/sitemap.xml
