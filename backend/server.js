@@ -32,8 +32,8 @@ cleanupUnverifiedUsers();
 // 🌐 GLOBAL MIDDLEWARE
 // =======================================================
 const allowedOrigins = [
-  "http://localhost:3000",
-  "https://waec-frontend.onrender.com"
+   "https://waec-frontend.onrender.com",
+    "http://localhost:3000"
 ];
 
 app.use(cors({

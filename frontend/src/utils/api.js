@@ -4,7 +4,7 @@ import { logoutOn401 } from "./authHelpers";
 export const API_BASE_URL = 
   process.env.NODE_ENV === "production"
     ? "https://waec-exam.onrender.com"
-    : "http://localhost:3000";
+   : "http://localhost:4000";   // ✅ FIXED PORT!!!
 
 
 const api = axios.create({
