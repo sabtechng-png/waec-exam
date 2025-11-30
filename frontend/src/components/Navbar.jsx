@@ -17,12 +17,7 @@ export default function Navbar() {
         <Toolbar disableGutters sx={{ minHeight: 72, gap: 2 }}>
           {/* ================= LOGO + TEXT ================= */}
           <Link to="/" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
-            <Box
-              component="img"
-              src={MyLogo}
-              alt="CBT Master Logo"
-              sx={{ height: 45, width: "auto", mr: 1.5, cursor: "pointer" }}
-            />
+
             <Typography variant="h6" sx={{ fontWeight: 800, letterSpacing: 0.2, color: "black" }}>
               CBT <span style={{ color: "#1976d2" }}>Master</span>
             </Typography>
