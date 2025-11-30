@@ -1,113 +1,90 @@
-// =======================================================
-// 🌍 SERVER SETUP — CLEAN, ORGANIZED & PRODUCTION READY
-// =======================================================
+// ============================
+// 🌍 SIMPLE SERVER SETUP
+// ============================
 
-// Always load environment variables FIRST
 process.env.TZ = "UTC";
 require("dotenv").config();
 
-const path = require("path");
 const express = require("express");
 const cors = require("cors");
-
-
+const path = require("path");
 const app = express();
 
-
-// =======================================================
-// 🛠 CRON JOB — AUTO DELETE UNVERIFIED ACCOUNTS
-// =======================================================
+// ============================
+// 🛠 AUTO DELETE UNVERIFIED USERS
+// ============================
 const cleanupUnverifiedUsers = require("./cron/cleanupUnverified");
 
-// Run cleanup once every 24 hours
-setInterval(() => {
-  console.log("⏳ Running daily cleanup for unverified accounts...");
-  cleanupUnverifiedUsers();
-}, 24 * 60 * 60 * 1000);
+// run once daily
+setInterval(cleanupUnverifiedUsers, 24 * 60 * 60 * 1000);
 
-// Run immediately on startup
+// run on startup
 cleanupUnverifiedUsers();
 
-// =======================================================
-// 🌐 GLOBAL MIDDLEWARE
-// =======================================================
-const allowedOrigins = [
-   "https://waec-frontend.onrender.com",
-    "http://localhost:3000"
-];
+// ============================
+// 🌐 CORS (VERY SIMPLE + CORRECT)
+// ============================
 
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("CORS not allowed"));
-    }
-  },
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:4000",
+      "https://cbt-master.com.ng",
+      "https://www.cbt-master.com.ng",
+      "https://waec-frontend.onrender.com"
+    ],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  })
+);
 
-
-
-
+// ============================
+// 📦 MIDDLEWARE
+// ============================
 app.use(express.json());
-
-// Serve uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-
-
-// =======================================================
+// ============================
 // 📌 ADMIN ROUTES
-// =======================================================
-const adminDashboardRoutes = require("./routes/adminDashboardRoutes");
-const adminAnalyticsRoutes = require("./routes/adminAnalyticsRoutes");
-app.use("/admin/dashboard", adminDashboardRoutes);
-app.use("/admin/analytics", adminAnalyticsRoutes);
-
+// ============================
+app.use("/admin/dashboard", require("./routes/adminDashboardRoutes"));
+app.use("/admin/analytics", require("./routes/adminAnalyticsRoutes"));
 app.use("/admin/users", require("./routes/adminUsersRoutes"));
 app.use("/landing", require("./routes/landingRoutes"));
 app.use("/admin/subjects", require("./routes/adminSubjectsRoutes"));
 app.use("/admin/uploads", require("./routes/adminUploadsRoutes"));
-//app.use("/admin/questions", require("./routes/adminQuestionsRoutes"));
-app.use("/leaderboard", require("./routes/exam/leaderboardRoutes"));
-app.use("/user", require("./routes/user/updateProfile"));
-app.use("/contact", require("./routes/contactRoutes"));
-
-
-
 app.use("/admin/questions", require("./routes/questionsManageRoutes"));
 app.use("/admin/questions", require("./routes/questionsUploadRoutes"));
 app.use("/admin/questions", require("./routes/questionsBulkOpsRoutes"));
 
-
-// =======================================================
+// ============================
 // 🎓 STUDENT ROUTES
-// =======================================================
+// ============================
 app.use("/api/student/subjects", require("./routes/studentSubjectsRoutes"));
 app.use("/api/student/sessions", require("./routes/studentSessionRoutes"));
 app.use("/student/results", require("./routes/studentResultsRoutes"));
 app.use("/dashboard", require("./routes/dashboardRoutes"));
 
-
-// Public subjects (homepage)
+// Public homepage subjects
 app.use("/public", require("./routes/publicSubjectRoutes"));
 
-// =======================================================
-// 🧩 EXAM ROUTES
-// =======================================================
+// ============================
+// 🧪 EXAM ROUTES
+// ============================
 app.use("/exam", require("./routes/exam/examRoutes"));
 
-// =======================================================
+// ============================
 // 🔐 AUTH ROUTES
-// =======================================================
+// ============================
 app.use("/auth", require("./routes/authRoutes"));
-app.use("/auth", require("./routes/passwordResetRoutes")); // added reset system
+app.use("/auth", require("./routes/passwordResetRoutes"));
 
-// =======================================================
+// ============================
 // 🚀 START SERVER
-// =======================================================
+// ============================
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () =>
-  console.log(`✅ Server running on port ${PORT} (UTC timezone enforced)`)
-);
+app.listen(PORT, () => {
+  console.log(`✅ Server running on port ${PORT} (UTC timezone enforced)`);
+});
