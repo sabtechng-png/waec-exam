@@ -1,0 +1,24 @@
+
+C:\Users\user\waec>git remote -v
+
+C:\Users\user\waec>git remote add origin https://github.com/sabtechng-png/waec-exam.git
+
+C:\Users\user\waec>git branch -M main
+
+C:\Users\user\waec>git add .
+C:\Users\user\waec>git commit -m "Update full project"
+C:\Users\user\waec>git push origin main
+
+C:\Users\user\waec>git push origin main --force
+
+
+
+
+
+
+
+
+
+
+
+

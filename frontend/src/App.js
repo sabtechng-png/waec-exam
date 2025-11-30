@@ -1,10 +1,18 @@
 // ===============================
 // File: src/App.js (Refined)
 // ===============================
+
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 // ---------- Public Pages ----------
 import LandingPage from "./pages/LandingPage";
+import BlogPage from "./pages/BlogPage";
+import BlogArticlePage from "./pages/BlogArticlePage";
+import WAECPage from "./pages/WaecPage";
+import JAMBPage from "./pages/JAMBPage";
+import NECOPage from "./pages/NECOPage";
+import CookieConsent from "./components/CookieConsent";
+
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import VerifyEmail from "./pages/VerifyEmail";
@@ -15,7 +23,6 @@ import ContactPage from "./pages/ContactPage";
 import FAQPage from "./pages/FAQPage";
 import ResetPasswordSuccess from "./pages/ResetPasswordSuccess";
 
-
 // ---------- Layouts ----------
 import DashboardLayout from "./layout/DashboardLayout";
 import AdminLayout from "./layout/AdminLayout";
@@ -23,7 +30,6 @@ import TermsPage from "./pages/TermsPage";
 import ForgotPassword from "./pages/ForgotPassword";
 import EmailVerificationNotice from "./pages/EmailVerificationNotice";
 import RegistrationSuccess from "./pages/RegistrationSuccess";
-
 
 // ---------- Dashboard Pages ----------
 import DashboardPage from "./pages/dashboard/DashboardPage";
@@ -43,8 +49,6 @@ import AdminManageUsers from "./pages/admin/AdminManageUsers";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminQuestionsPage from "./pages/admin/AdminQuestionsPage";
 
-
-
 // ---------- Exam Pages ----------
 import ExamPage from "./pages/exam/ExamPage";
 import AttemptHistory from "./pages/exam/AttemptHistory";
@@ -63,6 +67,7 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+
           {/* ======================= */}
           {/* ✅ ADMIN ROUTES         */}
           {/* ======================= */}
@@ -74,22 +79,23 @@ export default function App() {
               </AdminProtectedRoute>
             }
           >
-		  
-		
-
             <Route index element={<AdminDashboard />} />
             <Route path="users" element={<AdminManageUsers />} />
             <Route path="subjects" element={<ManageSubjectsPage />} />
-			<Route path="questions" element={<UploadQuestionsPage />} />
-			<Route path="analytics" element={<AdminAnalytics />} />
-			<Route path="manage-questions" element={<AdminQuestionsPage />} />
-
-			</Route>
+            <Route path="questions" element={<UploadQuestionsPage />} />
+            <Route path="analytics" element={<AdminAnalytics />} />
+            <Route path="manage-questions" element={<AdminQuestionsPage />} />
+          </Route>
 
           {/* ======================= */}
           {/* ✅ PUBLIC ROUTES        */}
           {/* ======================= */}
           <Route path="/" element={<LandingPage />} />
+          <Route path="/blog" element={<BlogPage />} />
+          <Route path="/blog/:articleId" element={<BlogArticlePage />} />
+          <Route path="/waec" element={<WAECPage />} />
+          <Route path="/jamb" element={<JAMBPage />} />
+          <Route path="/neco" element={<NECOPage />} />
 
           <Route
             path="/login"
@@ -129,6 +135,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/exam/history/:subjectId"
             element={
@@ -137,6 +144,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/exam/review/:sessionId"
             element={
@@ -157,52 +165,51 @@ export default function App() {
               </ProtectedRoute>
             }
           >
-		  
-		  
-		  <Route
-  path="/dashboard/result/:examId"
-  element={
-    <ProtectedRoute role="student">
-      <StudentResultDetailsPage />
-    </ProtectedRoute>
-  }
-/>
+            <Route
+              path="result/:examId"
+              element={
+                <ProtectedRoute role="student">
+                  <StudentResultDetailsPage />
+                </ProtectedRoute>
+              }
+            />
+
             <Route index element={<DashboardPage />} />
             <Route path="subjects" element={<StudentSubjectsPage />} />
             <Route path="results" element={<StudentResultsPage />} />
             <Route path="manage-subject" element={<SubjectPage />} />
-			 <Route path="leaderboard" element={<LeaderboardPage />} />
-			 <Route path="settings" element={<SettingsPage />} />
-		  
+            <Route path="leaderboard" element={<LeaderboardPage />} />
+            <Route path="settings" element={<SettingsPage />} />
 
-			
-            <Route path="leaderboard" element={<div>Leaderboard</div>} />
-           
           </Route>
 
           {/* ======================= */}
-          {/* ✅ 404 REDIRECT          */}
+          {/* 🔁 FALLBACK 404          */}
           {/* ======================= */}
           <Route path="*" element={<Navigate to="/" replace />} />
-<Route path="/reset-password" element={<ResetPassword />} />
-<Route path="/reset-success" element={<ResetPasswordSuccess />} />
 
-
-			<Route path="/terms" element={<TermsPage />} />
-			<Route path="/forgot-password" element={<ForgotPassword />} />
-			
-			<Route path="/about" element={<AboutPage />} />
-			<Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
-			<Route path="/contact" element={<ContactPage />} />
-			<Route path="/faq" element={<FAQPage />} />
-			 <Route path="/subjects" element={<PublicSubjects />} />
-			<Route path="/email-verification-notice" element={<EmailVerificationNotice />} />
-			<Route path="/registration-success" element={<RegistrationSuccess />} />
-
-
-
+          {/* ======================= */}
+          {/* 🔁 PUBLIC EXTRA PAGES    */}
+          {/* ======================= */}
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/reset-success" element={<ResetPasswordSuccess />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/faq" element={<FAQPage />} />
+          <Route path="/subjects" element={<PublicSubjects />} />
+          <Route path="/email-verification-notice" element={<EmailVerificationNotice />} />
+          <Route path="/registration-success" element={<RegistrationSuccess />} />
 
         </Routes>
+
+        {/* ======================= */}
+        {/* 🍪 COOKIE CONSENT BAR   */}
+        {/* ======================= */}
+        <CookieConsent />
+
       </BrowserRouter>
     </AuthProvider>
   );
