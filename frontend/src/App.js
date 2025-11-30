@@ -1,8 +1,11 @@
 // ===============================
-// File: src/App.js (Refined)
+// File: src/App.js (Refined + Google Analytics)
 // ===============================
 
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+
+// ---------- Google Analytics ----------
+import AnalyticsTracker from "./components/AnalyticsTracker";
 
 // ---------- Public Pages ----------
 import LandingPage from "./pages/LandingPage";
@@ -66,6 +69,12 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+
+        {/* ======================= */}
+        {/* 📊 GOOGLE ANALYTICS    */}
+        {/* ======================= */}
+        <AnalyticsTracker />
+
         <Routes>
 
           {/* ======================= */}
@@ -180,7 +189,6 @@ export default function App() {
             <Route path="manage-subject" element={<SubjectPage />} />
             <Route path="leaderboard" element={<LeaderboardPage />} />
             <Route path="settings" element={<SettingsPage />} />
-
           </Route>
 
           {/* ======================= */}
