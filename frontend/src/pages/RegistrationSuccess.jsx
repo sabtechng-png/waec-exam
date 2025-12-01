@@ -1,11 +1,17 @@
-// frontend/src/pages/RegistrationSuccess.jsx
+// ======================================================
+// RegistrationSuccess.jsx (Improved UI — Logic Preserved)
+// Source: :contentReference[oaicite:1]{index=1}
+// ======================================================
+
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 
 import Navbar from "../components/Navbar";
 import { Footer } from "../components/Footer";
-import { FaEnvelopeOpenText, FaRedo } from "react-icons/fa";
+
+import { Box, Paper, Typography, Button } from "@mui/material";
+import { FaEnvelopeOpenText } from "react-icons/fa";
 
 export default function RegistrationSuccess() {
   const location = useLocation();
@@ -47,6 +53,7 @@ export default function RegistrationSuccess() {
         `${process.env.REACT_APP_API_URL}/auth/resend-verify-link`,
         { email }
       );
+
       alert("Verification email resent!");
       setCooldown(60);
     } catch (err) {
@@ -56,82 +63,92 @@ export default function RegistrationSuccess() {
     setSending(false);
   };
 
-  // ✨ Beautiful Modern Button Style
-  const appButton = (disabled = false) => ({
-    width: "100%",
-    background: disabled ? "#6c757d" : "#0d6efd",
-    color: "white",
-    border: "none",
-    padding: "13px 0",
-    fontSize: "16px",
-    fontWeight: 500,
-    borderRadius: "8px",
-    cursor: disabled ? "not-allowed" : "pointer",
-    transition: "0.3s",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-    marginBottom: "12px",
-  });
-
   return (
     <>
       <Navbar />
 
-      <div
-        style={{
-          minHeight: "70vh",
+      <Box
+        sx={{
+          minHeight: "75vh",
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          padding: 20,
+          px: 2,
+          py: 6,
+          bgcolor: "#f4f6fb",
         }}
       >
-        <div
-          style={{
+        <Paper
+          elevation={0}
+          sx={{
             width: "100%",
             maxWidth: 480,
-            padding: 30,
-            background: "white",
+            p: { xs: 3, md: 5 },
+            borderRadius: 4,
+            border: "1px solid",
+            borderColor: "divider",
             textAlign: "center",
-            borderRadius: 12,
-            boxShadow: "0 4px 10px rgba(0,0,0,0.12)",
+            backgroundColor: "white",
           }}
         >
-          <FaEnvelopeOpenText size={60} color="#0d6efd" className="mb-3" />
+          {/* Icon */}
+          <FaEnvelopeOpenText size={60} color="#0d6efd" style={{ marginBottom: 15 }} />
 
-          <h2>Almost There!</h2>
+          {/* Title */}
+          <Typography variant="h5" fontWeight={800} gutterBottom>
+            Almost There!
+          </Typography>
 
-          <p className="mb-3">
+          {/* Description */}
+          <Typography
+            variant="body1"
+            color="text.secondary"
+            sx={{ mb: 3, lineHeight: 1.7 }}
+          >
             A verification link has been sent to:
             <br />
-            <b>{maskEmail(email)}</b>
-          </p>
+            <strong>{maskEmail(email)}</strong>
+          </Typography>
 
           {/* Open Email App Button */}
-          <button
-            style={appButton(false)}
-            onMouseEnter={(e) => (e.target.style.background = "#0b5ed7")}
-            onMouseLeave={(e) => (e.target.style.background = "#0d6efd")}
+          <Button
+            variant="contained"
+            fullWidth
+            size="large"
+            sx={{
+              py: 1.3,
+              borderRadius: 2,
+              textTransform: "none",
+              fontSize: "16px",
+              mb: 2,
+            }}
             onClick={() => window.open("https://mail.google.com", "_blank")}
           >
             Open Email App
-          </button>
+          </Button>
 
-          <p className="text-muted" style={{ fontSize: 14 }}>
+          <Typography variant="body2" sx={{ mt: 1, mb: 1 }} color="text.secondary">
             Didn’t receive the email?
-          </p>
+          </Typography>
 
-          {/* Resend Button */}
-          <button
+          {/* Resend Verification Email */}
+          <Button
+            fullWidth
+            size="large"
+            variant="contained"
             disabled={sending || cooldown > 0}
             onClick={resendEmail}
-            style={appButton(sending || cooldown > 0)}
-            onMouseEnter={(e) => {
-              if (cooldown === 0 && !sending)
-                e.target.style.background = "#0b5ed7";
-            }}
-            onMouseLeave={(e) => {
-              if (cooldown === 0 && !sending)
-                e.target.style.background = "#0d6efd";
+            sx={{
+              py: 1.3,
+              borderRadius: 2,
+              textTransform: "none",
+              fontSize: "16px",
+              bgcolor: sending || cooldown > 0 ? "#6c757d" : "#0d6efd",
+              ":hover": {
+                bgcolor:
+                  sending || cooldown > 0 ? "#6c757d" : "#0b5ed7",
+              },
+              mb: 2,
             }}
           >
             {sending
@@ -139,13 +156,13 @@ export default function RegistrationSuccess() {
               : cooldown > 0
               ? `Resend in ${cooldown}s`
               : "Resend Verification Email"}
-          </button>
+          </Button>
 
-          <p className="mt-3 text-muted" style={{ fontSize: 12 }}>
-            Check your Spam/Junk folder if you don't see the email.
-          </p>
-        </div>
-      </div>
+          <Typography variant="caption" color="text.secondary">
+            Check your Spam/Junk folder if you don’t see the email.
+          </Typography>
+        </Paper>
+      </Box>
 
       <Footer />
     </>

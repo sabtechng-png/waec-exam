@@ -1,6 +1,6 @@
 // =====================================
 // File: src/pages/LandingPage.jsx
-// Modern Minimal (Apple-style) Landing
+// Modern Minimal (Apple-style) Landing (Improved SEO + AdSense Safe)
 // =====================================
 
 import {
@@ -44,71 +44,93 @@ export default function LandingPage() {
 
   const testimonials = [
     { quote: "This is an amazing platform! I passed my exams with ease.", name: "John Doe" },
-    { quote: "The practice tests were very helpful in boosting my confidence.", name: "Jane Smith" },
-    { quote: "I love how interactive the platform is. Highly recommended!", name: "Alice Brown" },
+    { quote: "The practice tests boosted my confidence greatly!", name: "Jane Smith" },
+    { quote: "Very interactive and realistic. Highly recommended!", name: "Alice Brown" },
   ];
 
   const faqList = [
     { q: "How do I start a test?", a: "Click on 'Try CBT Exam Free' to begin." },
     {
       q: "What subjects are available?",
-      a: "We offer a wide range of subjects, including Math, Physics, Chemistry, and more.",
+      a: "We support Math, Physics, Chemistry, Biology, English, Geography and more.",
     },
     {
       q: "Is this the real WAEC / JAMB format?",
-      a: "Yes. Our engine simulates real CBT timing, navigation, and scoring.",
+      a: "Yes. Our CBT system simulates real timing, question navigation and scoring.",
     },
   ];
 
   const blogHighlights = [
     {
       title: "How to Pass JAMB 2025: Complete Strategy Guide",
-      desc: "Learn the exact steps to boost your JAMB score using CBT practice, time management and past questions.",
-      href: "/blog/how-to-pass-jamb", // future article route
+      desc: "Practical steps to boost your JAMB score through CBT practice and timing.",
+      href: "/blog/how-to-pass-jamb",
     },
     {
       title: "Top 20 WAEC Physics Questions You Should Not Ignore",
-      desc: "Handpicked WAEC-style questions with explanations to strengthen your Physics preparation.",
-      href: "/blog/waec-physics-tips", // future article route
+      desc: "Essential WAEC-style questions with explanations.",
+      href: "/blog/waec-physics-tips",
     },
     {
       title: "7 Study Habits of High-Scoring Students",
-      desc: "Simple daily routines that dramatically improve focus, retention, and exam results.",
-      href: "/blog/study-techniques", // future article route
+      desc: "Simple routines that dramatically improve exam performance.",
+      href: "/blog/study-techniques",
     },
   ];
 
   return (
     <Box sx={{ bgcolor: "#f7f9fc", minHeight: "100vh" }}>
-      {/* ==================== SEO + TAWK.TO SCRIPT VIA HELMET ===================== */}
+      {/* =========================== SEO & OG METADATA =========================== */}
       <Helmet>
         <title>CBT Master – Free WAEC, JAMB & NECO CBT Practice</title>
+
         <meta
           name="description"
-          content="Prepare for WAEC, JAMB and NECO with CBT Master – a free CBT practice platform with real exam simulation, instant scoring, analytics and progress tracking."
+          content="Practice real WAEC, JAMB and NECO CBT questions online with instant scoring, smart analytics, full exam simulation and progress tracking — completely free."
         />
-        <script type="text/javascript">
-          {`
-            var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
-            (function(){
-            var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
-            s1.async=true;
-            s1.src='https://embed.tawk.to/6919e24095920719593c9dfc/1ja6hnjj4';
-            s1.charset='UTF-8';
-            s1.setAttribute('crossorigin','*');
-            s0.parentNode.insertBefore(s1,s0);
-            })();
-          `}
-        </script>
+
+        <meta
+          name="keywords"
+          content="WAEC CBT, JAMB CBT, NECO CBT, online exam practice, Nigeria CBT practice, free WAEC questions, JAMB 2025 practice, NECO past questions"
+        />
+
+        {/* Canonical URL */}
+        <link rel="canonical" href="https://www.cbt-master.com.ng/" />
+
+        {/* OpenGraph */}
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="CBT Master – WAEC, JAMB & NECO CBT Practice" />
+        <meta
+          property="og:description"
+          content="Free CBT practice for WAEC, JAMB and NECO with real exam simulation, instant results and analytics."
+        />
+        <meta property="og:url" content="https://www.cbt-master.com.ng/" />
+        <meta property="og:image" content="https://www.cbt-master.com.ng/og-image.png" />
+
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta
+          name="twitter:title"
+          content="CBT Master – Free WAEC, NECO & JAMB CBT Practice"
+        />
+        <meta
+          name="twitter:description"
+          content="Prepare for WAEC, NECO and JAMB exams with free CBT questions and real simulation."
+        />
+        <meta name="twitter:image" content="https://www.cbt-master.com.ng/og-image.png" />
+
+        <meta name="theme-color" content="#0A3D62" />
       </Helmet>
-      {/* ==================================================================== */}
+
+      {/* ======================================================================= */}
 
       <Navbar />
 
       {/* ============================== HERO =============================== */}
       <Container maxWidth="lg" sx={{ py: { xs: 6, md: 10 } }}>
         <Grid container spacing={6} alignItems="center">
-          {/* LEFT SIDE: TEXT + CTA */}
+
+          {/* LEFT SIDE */}
           <Grid item xs={12} md={6}>
             <Typography
               variant="h3"
@@ -118,7 +140,7 @@ export default function LandingPage() {
             >
               Prepare for CBT exams
               <br />
-              the **smart** way.
+              the <strong>smart</strong> way.
             </Typography>
 
             <Typography
@@ -127,7 +149,7 @@ export default function LandingPage() {
               sx={{ mb: 3, maxWidth: 500 }}
             >
               Practice real WAEC, JAMB and NECO CBT questions with instant scoring,
-              performance analytics and progress tracking — completely free.
+              performance analysis and progress tracking — completely free.
             </Typography>
 
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
@@ -151,13 +173,7 @@ export default function LandingPage() {
               </Button>
             </Stack>
 
-            {/* LIVE STATS */}
-            <Stack
-              direction="row"
-              spacing={4}
-              sx={{ mt: 5 }}
-              alignItems="center"
-            >
+            <Stack direction="row" spacing={4} sx={{ mt: 5 }} alignItems="center">
               <Box>
                 <Typography variant="h4" fontWeight={800} color="primary">
                   10,200+
@@ -178,7 +194,7 @@ export default function LandingPage() {
             </Stack>
           </Grid>
 
-          {/* RIGHT SIDE: CBT PREVIEW CARD */}
+          {/* RIGHT SIDE */}
           <Grid item xs={12} md={6}>
             <Card
               variant="outlined"
@@ -251,8 +267,8 @@ export default function LandingPage() {
                   color="text.secondary"
                   sx={{ mt: 1.5, display: "block" }}
                 >
-                  Simulated preview. Actual CBT includes timing, question review,
-                  subject selection and full analytics.
+                  Simulated preview. Actual CBT includes timing, subject selection,
+                  question review and full analytics.
                 </Typography>
               </CardContent>
             </Card>
@@ -278,34 +294,10 @@ export default function LandingPage() {
               Explore:
             </Typography>
 
-            <Chip
-              label="WAEC Guide"
-              component="a"
-              href="/waec"
-              clickable
-              variant="outlined"
-            />
-            <Chip
-              label="JAMB Guide"
-              component="a"
-              href="/jamb"
-              clickable
-              variant="outlined"
-            />
-            <Chip
-              label="NECO Guide"
-              component="a"
-              href="/neco"
-              clickable
-              variant="outlined"
-            />
-            <Chip
-              label="CBT Blog"
-              component="a"
-              href="/blog"
-              clickable
-              variant="outlined"
-            />
+            <Chip label="WAEC Guide" component="a" href="/waec" clickable variant="outlined" />
+            <Chip label="JAMB Guide" component="a" href="/jamb" clickable variant="outlined" />
+            <Chip label="NECO Guide" component="a" href="/neco" clickable variant="outlined" />
+            <Chip label="CBT Blog" component="a" href="/blog" clickable variant="outlined" />
             <Chip
               label="Start Practice"
               component="a"
@@ -372,30 +364,31 @@ export default function LandingPage() {
                   Real Exam Simulation
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Practice in the same CBT style you will see in WAEC, JAMB and NECO —
-                  including timing, navigation and instant scoring.
+                  Experience actual WAEC, JAMB and NECO CBT patterns — timing,
+                  navigation and scoring included.
                 </Typography>
               </Paper>
             </Grid>
+
             <Grid item xs={12} md={4}>
               <Paper variant="outlined" sx={{ p: 3, borderRadius: 3 }}>
                 <Typography variant="subtitle1" fontWeight={700} gutterBottom>
                   Smart Performance Insights
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Track your progress across subjects, topics and sessions and know
-                  exactly where you need to improve.
+                  Track your progress across subjects and topics. Discover exactly
+                  what to improve.
                 </Typography>
               </Paper>
             </Grid>
+
             <Grid item xs={12} md={4}>
               <Paper variant="outlined" sx={{ p: 3, borderRadius: 3 }}>
                 <Typography variant="subtitle1" fontWeight={700} gutterBottom>
                   100% Free to Start
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Start practicing instantly without paying anything. Just open,
-                  select subject and begin your CBT session.
+                  Open the app, pick a subject and start practicing instantly.
                 </Typography>
               </Paper>
             </Grid>
@@ -410,78 +403,42 @@ export default function LandingPage() {
 
           <Grid container spacing={3}>
             <Grid item xs={12} md={4}>
-              <Paper
-                variant="outlined"
-                sx={{ p: 3, borderRadius: 3, height: "100%" }}
-              >
+              <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, height: "100%" }}>
                 <Typography variant="h6" fontWeight={700}>
                   WAEC (SSCE)
                 </Typography>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ mt: 1.5, mb: 2 }}
-                >
-                  Practice WAEC-style multiple choice questions across core subjects
-                  and track your readiness for SSCE.
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5, mb: 2 }}>
+                  Practice WAEC-style multiple choice questions across core subjects.
                 </Typography>
-                <Button
-                  variant="text"
-                  href="/waec"
-                  sx={{ textTransform: "none", px: 0 }}
-                >
+                <Button variant="text" href="/waec" sx={{ textTransform: "none", px: 0 }}>
                   Open WAEC guide →
                 </Button>
               </Paper>
             </Grid>
 
             <Grid item xs={12} md={4}>
-              <Paper
-                variant="outlined"
-                sx={{ p: 3, borderRadius: 3, height: "100%" }}
-              >
+              <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, height: "100%" }}>
                 <Typography variant="h6" fontWeight={700}>
                   JAMB (UTME)
                 </Typography>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ mt: 1.5, mb: 2 }}
-                >
-                  Timed JAMB CBT practice with past questions, instant scoring and
-                  subject selection to simulate the real exam.
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5, mb: 2 }}>
+                  Timed JAMB CBT practice with past questions and instant scoring.
                 </Typography>
-                <Button
-                  variant="text"
-                  href="/jamb"
-                  sx={{ textTransform: "none", px: 0 }}
-                >
+                <Button variant="text" href="/jamb" sx={{ textTransform: "none", px: 0 }}>
                   Open JAMB guide →
                 </Button>
               </Paper>
             </Grid>
 
             <Grid item xs={12} md={4}>
-              <Paper
-                variant="outlined"
-                sx={{ p: 3, borderRadius: 3, height: "100%" }}
-              >
+              <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, height: "100%" }}>
                 <Typography variant="h6" fontWeight={700}>
                   NECO & Others
                 </Typography>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ mt: 1.5, mb: 2 }}
-                >
-                  Prepare for NECO and other local exams using the same CBT engine
-                  and question formats.
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5, mb: 2 }}>
+                  Prepare for NECO and local exams using the same CBT engine.
                 </Typography>
-                <Button
-                  variant="text"
-                  href="/neco"
-                  sx={{ textTransform: "none", px: 0 }}
-                >
+                <Button variant="text" href="/neco" sx={{ textTransform: "none", px: 0 }}>
                   Open NECO guide →
                 </Button>
               </Paper>
@@ -511,9 +468,7 @@ export default function LandingPage() {
                     <ListItem
                       key={i}
                       disableGutters
-                      secondaryAction={
-                        <Chip size="small" label={`${t.score}%`} color="primary" />
-                      }
+                      secondaryAction={<Chip size="small" label={`${t.score}%`} color="primary" />}
                     >
                       <ListItemAvatar>
                         <Avatar>{i + 1}</Avatar>
@@ -526,7 +481,6 @@ export default function LandingPage() {
             </Card>
           </Grid>
 
-          {/* TESTIMONIALS */}
           <Grid item xs={12} md={7}>
             <Typography variant="h6" fontWeight={800} gutterBottom>
               What students say
@@ -560,14 +514,10 @@ export default function LandingPage() {
                 From our blog
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Read exam strategies, study tips and CBT insights written for students like you.
+                Read exam strategies, study tips and CBT insights written for students.
               </Typography>
             </Box>
-            <Button
-              variant="text"
-              href="/blog"
-              sx={{ textTransform: "none" }}
-            >
+            <Button variant="text" href="/blog" sx={{ textTransform: "none" }}>
               View all articles →
             </Button>
           </Stack>
@@ -575,25 +525,14 @@ export default function LandingPage() {
           <Grid container spacing={3} sx={{ mt: 2 }}>
             {blogHighlights.map((post, idx) => (
               <Grid item xs={12} md={4} key={idx}>
-                <Paper
-                  variant="outlined"
-                  sx={{ p: 3, borderRadius: 3, height: "100%" }}
-                >
+                <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, height: "100%" }}>
                   <Typography variant="subtitle1" fontWeight={700} gutterBottom>
                     {post.title}
                   </Typography>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ mb: 2 }}
-                  >
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                     {post.desc}
                   </Typography>
-                  <Button
-                    variant="text"
-                    href={post.href}
-                    sx={{ textTransform: "none", px: 0 }}
-                  >
+                  <Button variant="text" href={post.href} sx={{ textTransform: "none", px: 0 }}>
                     Read article →
                   </Button>
                 </Paper>
@@ -614,11 +553,7 @@ export default function LandingPage() {
               Frequently Asked Questions
             </Typography>
 
-            <Button
-              variant="text"
-              href="/faq"
-              sx={{ textTransform: "none" }}
-            >
+            <Button variant="text" href="/faq" sx={{ textTransform: "none" }}>
               View all FAQ →
             </Button>
           </Stack>
@@ -650,6 +585,7 @@ export default function LandingPage() {
           <Typography variant="h5" fontWeight={800} gutterBottom>
             Ready to start practicing smarter?
           </Typography>
+
           <Typography
             variant="body1"
             color="text.secondary"
@@ -686,7 +622,15 @@ export default function LandingPage() {
         </Box>
       </Container>
 
-      {/* Floating chat shortcut (extra to Tawk widget) */}
+      {/* SAFE TAWK.TO LOAD (Outside Helmet, below content) */}
+      <script
+        async
+        src="https://embed.tawk.to/6919e24095920719593c9dfc/1ja6hnjj4"
+        charset="UTF-8"
+        crossOrigin="*"
+      ></script>
+
+      {/* Floating chat shortcut */}
       <Fab color="primary" sx={{ position: "fixed", bottom: 24, right: 24 }}>
         <ChatIcon />
       </Fab>

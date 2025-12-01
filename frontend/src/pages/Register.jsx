@@ -1,4 +1,7 @@
-// frontend/src/pages/Register.jsx
+// ======================================================
+// Improved Register.jsx (UI Upgrade — Logic Preserved)
+// Source: :contentReference[oaicite:1]{index=1}
+// ======================================================
 import { useState } from "react";
 import {
   TextField,
@@ -9,6 +12,9 @@ import {
   IconButton,
   Box,
   Link as MLink,
+  Divider,
+  Typography,
+  Paper
 } from "@mui/material";
 
 import Visibility from "@mui/icons-material/Visibility";
@@ -17,7 +23,6 @@ import { Link, useNavigate } from "react-router-dom";
 
 import Navbar from "../components/Navbar";
 import { Footer } from "../components/Footer";
-import AuthCard from "../components/AuthCard";
 import GoogleAuthButton from "../components/GoogleAuthButton";
 
 import api from "../utils/api";
@@ -67,10 +72,7 @@ export default function Register() {
       // Save for resend link usage
       localStorage.setItem("pending_email", email);
 
-      // Redirect to registration success page
-      navigate("/registration-success", {
-        state: { email },
-      });
+      navigate("/registration-success", { state: { email } });
 
       // Clear form
       setFullName("");
@@ -99,13 +101,36 @@ export default function Register() {
           justifyContent: "center",
           alignItems: "center",
           px: 2,
+          py: 6
         }}
       >
-        <AuthCard title="Create Your Account">
-          {/* ERROR MESSAGE */}
+        {/* ==================== CARD ==================== */}
+        <Paper
+          elevation={0}
+          sx={{
+            width: "100%",
+            maxWidth: 430,
+            p: { xs: 3, md: 5 },
+            borderRadius: 4,
+            border: "1px solid",
+            borderColor: "divider",
+            backgroundColor: "white"
+          }}
+        >
+          <Typography
+            variant="h5"
+            fontWeight={800}
+            textAlign="center"
+            mb={3}
+            sx={{ letterSpacing: -0.5 }}
+          >
+            Create Your Account
+          </Typography>
+
+          {/* ERROR TOAST */}
           <Snackbar
             open={!!error}
-            autoHideDuration={5000}
+            autoHideDuration={4500}
             onClose={() => setError("")}
             anchorOrigin={{ vertical: "top", horizontal: "center" }}
           >
@@ -114,40 +139,42 @@ export default function Register() {
             </Alert>
           </Snackbar>
 
-          {/* SUCCESS MESSAGE (if you ever want to show it) */}
+          {/* SUCCESS TOAST */}
           <Snackbar
             open={!!successMsg}
-            autoHideDuration={6000}
+            autoHideDuration={5000}
             onClose={() => setSuccessMsg("")}
             anchorOrigin={{ vertical: "top", horizontal: "center" }}
           >
             <Alert
               severity="success"
               variant="filled"
-              sx={{
-                width: "100%",
-                background: "#0d6efd",
-                color: "white",
-                fontSize: "16px",
-                fontWeight: "600",
-                borderRadius: "8px",
-              }}
+              sx={{ width: "100%" }}
             >
               {successMsg}
             </Alert>
           </Snackbar>
 
+          {/* GOOGLE SIGN UP */}
           <GoogleAuthButton />
 
+          <Divider sx={{ my: 3 }}>or</Divider>
+
+          {/* ==================== FORM ==================== */}
           <form onSubmit={handleSubmit}>
+
+            {/* FULL NAME */}
             <TextField
               label="Full Name"
               fullWidth
               margin="normal"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
+              error={!!error && !fullName}
+              helperText={!!error && !fullName ? "Full name is required" : ""}
             />
 
+            {/* EMAIL */}
             <TextField
               label="Email Address"
               type="email"
@@ -155,8 +182,21 @@ export default function Register() {
               margin="normal"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              error={
+                !!error &&
+                (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+              }
+              helperText={
+                !!error &&
+                (!email
+                  ? "Email is required"
+                  : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+                  ? "Enter a valid email"
+                  : "")
+              }
             />
 
+            {/* PASSWORD */}
             <TextField
               label="Password"
               type={showPass ? "text" : "password"}
@@ -164,6 +204,18 @@ export default function Register() {
               margin="normal"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              error={
+                !!error &&
+                (!password || password.length < 6)
+              }
+              helperText={
+                !!error &&
+                (!password
+                  ? "Password is required"
+                  : password.length < 6
+                  ? "Minimum 6 characters"
+                  : "")
+              }
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
@@ -175,6 +227,7 @@ export default function Register() {
               }}
             />
 
+            {/* CONFIRM PASSWORD */}
             <TextField
               label="Confirm Password"
               type={showConfirm ? "text" : "password"}
@@ -182,12 +235,16 @@ export default function Register() {
               margin="normal"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
+              error={!!error && password !== confirm}
+              helperText={
+                !!error && password !== confirm
+                  ? "Passwords do not match"
+                  : ""
+              }
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton
-                      onClick={() => setShowConfirm(!showConfirm)}
-                    >
+                    <IconButton onClick={() => setShowConfirm(!showConfirm)}>
                       {showConfirm ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
                   </InputAdornment>
@@ -195,14 +252,15 @@ export default function Register() {
               }}
             />
 
+            {/* SUBMIT BUTTON */}
             <Button
               disabled={loading}
               type="submit"
               fullWidth
               variant="contained"
               sx={{
-                mt: 2,
-                py: 1.2,
+                mt: 3,
+                py: 1.3,
                 textTransform: "none",
                 borderRadius: 2,
                 fontSize: "16px",
@@ -212,13 +270,14 @@ export default function Register() {
             </Button>
           </form>
 
+          {/* FOOTER LINK */}
           <Box sx={{ textAlign: "center", mt: 2 }}>
             Already have an account?{" "}
-            <MLink component={Link} to="/login">
+            <MLink component={Link} to="/login" underline="hover">
               Login
             </MLink>
           </Box>
-        </AuthCard>
+        </Paper>
       </Box>
 
       <Footer />

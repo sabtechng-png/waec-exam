@@ -1,5 +1,6 @@
 // ==================================
 // File: src/pages/ContactPage.jsx
+// Improved, AdSense-safe, SEO-friendly, logic preserved
 // ==================================
 
 import {
@@ -17,14 +18,14 @@ import { useState } from "react";
 import Navbar from "../components/Navbar";
 import { Footer } from "../components/Footer";
 import api from "../utils/api";
-import { Helmet } from "react-helmet";   // ⭐ ADDED
+import { Helmet } from "react-helmet";
 
 export default function ContactPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
-
   const [sending, setSending] = useState(false);
+
   const [snack, setSnack] = useState({
     open: false,
     msg: "",
@@ -34,20 +35,20 @@ export default function ContactPage() {
   // Success animation overlay
   const [successScreen, setSuccessScreen] = useState(false);
 
-  const showToast = (msg, type = "success") => {
+  const showToast = (msg, type = "error") => {
     setSnack({ open: true, msg, type });
   };
 
   const handleSend = async () => {
     if (!name || !email || !message) {
-      showToast("Please fill all fields.", "error");
+      showToast("Please fill in all fields.");
       return;
     }
 
     try {
       setSending(true);
 
-      const res = await api.post("/contact/send", {
+      await api.post("/contact/send", {
         name,
         email,
         message,
@@ -61,9 +62,11 @@ export default function ContactPage() {
       setName("");
       setEmail("");
       setMessage("");
+
+      showToast("Message sent successfully!", "success");
     } catch (err) {
       console.error("Contact form error:", err);
-      showToast("Failed to send message. Try again.", "error");
+      showToast("Failed to send message. Please try again.", "error");
     } finally {
       setSending(false);
     }
@@ -71,23 +74,15 @@ export default function ContactPage() {
 
   return (
     <Box sx={{ bgcolor: "#f7f9fc", minHeight: "100vh" }}>
-	{/* ==================== TAWK.TO SCRIPT VIA HELMET ===================== */}
+      {/* ==================== SEO METADATA ONLY (No Tawk or third-party scripts) ===================== */}
       <Helmet>
-        <script type="text/javascript">
-          {`
-            var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
-            (function(){
-            var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
-            s1.async=true;
-            s1.src='https://embed.tawk.to/6919e24095920719593c9dfc/1ja6hnjj4';
-            s1.charset='UTF-8';
-            s1.setAttribute('crossorigin','*');
-            s0.parentNode.insertBefore(s1,s0);
-            })();
-          `}
-        </script>
+        <title>Contact & Support - CBT Master</title>
+        <meta
+          name="description"
+          content="Contact CBT Master for support, questions, feedback, or technical assistance. Our team is available Monday to Friday, 9AM to 5PM."
+        />
       </Helmet>
-      {/* ==================================================================== */}
+
       <Navbar />
 
       {/* Success Overlay */}
@@ -113,7 +108,7 @@ export default function ContactPage() {
               textAlign: "center",
               maxWidth: 350,
             }}
-            elevation={3}
+            elevation={4}
           >
             {/* Checkmark animation */}
             <svg width="90" height="90" viewBox="0 0 120 120" style={{ marginBottom: 16 }}>
@@ -140,12 +135,13 @@ export default function ContactPage() {
               Message Sent!
             </Typography>
             <Typography sx={{ mt: 1, color: "text.secondary" }}>
-              We received your message. A confirmation email has been sent.
+              Thank you for reaching out. We will get back to you shortly.
             </Typography>
           </Paper>
         </Box>
       )}
 
+      {/* Main Content */}
       <Container maxWidth="sm" sx={{ py: 8 }}>
         <Paper elevation={0} sx={{ p: 4, borderRadius: 3 }}>
           <Typography variant="h4" fontWeight={800} gutterBottom>
@@ -153,20 +149,16 @@ export default function ContactPage() {
           </Typography>
 
           <Typography variant="body1" sx={{ mt: 2, lineHeight: 1.8 }}>
-            Need help? Want to report an issue or ask a question?
-            Fill out the form below or send us an email.
+            Have a question, need help with your account, or want to report an issue?
+            Our support team is here to assist you.
           </Typography>
 
-          <Typography sx={{ mt: 2 }}>
+          <Typography sx={{ mt: 3 }}>
             <strong>Email:</strong> support@cbt-master.com.ng
           </Typography>
 
           <Typography sx={{ mt: 0.5 }}>
-
-          </Typography>
-
-          <Typography sx={{ mt: 0.5 }}>
-            <strong>Working Hours:</strong> Mon–Fri, 9AM–5PM
+            <strong>Working Hours:</strong> Monday – Friday, 9:00 AM to 5:00 PM
           </Typography>
 
           {/* Contact Form */}

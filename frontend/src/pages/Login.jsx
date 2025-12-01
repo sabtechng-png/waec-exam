@@ -1,20 +1,33 @@
-// Login.jsx (Upgraded UI — Logic 100% preserved)
+// ===============================================
+// Improved Login.jsx (UI Upgrade — Logic Preserved)
+// Source: :contentReference[oaicite:1]{index=1}
+// ===============================================
 import { useState, useEffect } from "react";
 import {
-  TextField, Button, Snackbar, Alert, Link as MLink,
-  InputAdornment, IconButton, Box
+  TextField,
+  Button,
+  Snackbar,
+  Alert,
+  Link as MLink,
+  InputAdornment,
+  IconButton,
+  Box,
+  Divider,
+  Typography,
+  Paper,
 } from "@mui/material";
+
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import { Link, useNavigate } from "react-router-dom";
 
 import Navbar from "../components/Navbar";
 import { Footer } from "../components/Footer";
-import AuthCard from "../components/AuthCard";
+
 import GoogleAuthButton from "../components/GoogleAuthButton";
 
 import { useAuth } from "../context/AuthContext";
-import api from "../utils/api";   // keep your axios instance
+import api from "../utils/api";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -27,7 +40,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // redirect if already logged in
+  // Redirect logged-in users
   useEffect(() => {
     if (token) navigate("/dashboard");
   }, [token, navigate]);
@@ -44,13 +57,14 @@ export default function Login() {
     e.preventDefault();
     const v = validate();
     if (v) return setError(v);
+
     setError("");
     setLoading(true);
 
     try {
       const { data } = await api.post("/auth/login", { email, password });
 
-      // your original logic preserved
+      // Original logic preserved
       login(data.user, data.token);
 
       if (data?.user?.role === "admin") {
@@ -70,10 +84,9 @@ export default function Login() {
 
   return (
     <>
-      {/* TOP NAVBAR */}
       <Navbar />
 
-      {/* CENTER CONTAINER */}
+      {/* ========================= Main Section ========================= */}
       <Box
         sx={{
           minHeight: "85vh",
@@ -85,7 +98,29 @@ export default function Login() {
           py: 6,
         }}
       >
-        <AuthCard title="Login to Your Account">
+        <Paper
+          elevation={0}
+          sx={{
+            width: "100%",
+            maxWidth: 420,
+            p: { xs: 3, md: 5 },
+            borderRadius: 4,
+            border: "1px solid",
+            borderColor: "divider",
+            backgroundColor: "white",
+          }}
+        >
+          <Typography
+            variant="h5"
+            fontWeight={800}
+            textAlign="center"
+            mb={3}
+            sx={{ letterSpacing: -0.5 }}
+          >
+            Login to Your Account
+          </Typography>
+
+          {/* Error Snackbar */}
           <Snackbar
             open={!!error}
             autoHideDuration={4000}
@@ -102,18 +137,22 @@ export default function Login() {
             </Alert>
           </Snackbar>
 
-          {/* GOOGLE SIGN-IN (Disabled for now) */}
+          {/* Google Sign In */}
           <GoogleAuthButton />
 
+          <Divider sx={{ my: 3 }}>or</Divider>
+
+          {/* ======================== FORM START ======================== */}
           <form onSubmit={handleSubmit} noValidate>
+            {/* EMAIL */}
             <TextField
-              label="Email"
+              label="Email Address"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               fullWidth
-              margin="normal"
               required
+              margin="normal"
               error={
                 !!error &&
                 (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
@@ -128,14 +167,15 @@ export default function Login() {
               }
             />
 
+            {/* PASSWORD */}
             <TextField
               label="Password"
               type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               fullWidth
-              margin="normal"
               required
+              margin="normal"
               error={!!error && (!password || password.length < 6)}
               helperText={
                 !!error &&
@@ -151,6 +191,7 @@ export default function Login() {
                     <IconButton
                       onClick={() => setShowPassword((s) => !s)}
                       edge="end"
+                      aria-label="Toggle password visibility"
                     >
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
@@ -159,28 +200,30 @@ export default function Login() {
               }}
             />
 
+            {/* LOGIN BUTTON */}
             <Button
               type="submit"
               variant="contained"
               fullWidth
               disabled={loading}
               sx={{
-                mt: 2,
-                py: 1.2,
-                borderRadius: 2,
-                textTransform: "none",
+                mt: 3,
+                py: 1.3,
                 fontSize: "16px",
+                textTransform: "none",
+                borderRadius: 2,
               }}
             >
               {loading ? "Logging in..." : "Login"}
             </Button>
           </form>
 
+          {/* EXTRA LINKS */}
           <MLink
             component={Link}
             to="/forgot-password"
             underline="hover"
-            sx={{ mt: 2, fontSize: 14, display: "block" }}
+            sx={{ mt: 2, fontSize: 14, display: "block", textAlign: "center" }}
           >
             Forgot password?
           </MLink>
@@ -189,14 +232,13 @@ export default function Login() {
             component={Link}
             to="/register"
             underline="hover"
-            sx={{ mt: 1, fontSize: 14, display: "block" }}
+            sx={{ mt: 1, fontSize: 14, display: "block", textAlign: "center" }}
           >
             Don’t have an account? Register
           </MLink>
-        </AuthCard>
+        </Paper>
       </Box>
 
-      {/* FOOTER */}
       <Footer />
     </>
   );
