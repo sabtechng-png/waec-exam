@@ -138,7 +138,7 @@ export default function LandingPage() {
           >
             <Box
               component="img"
-              src="/cbt-preview.png"
+              src="../assets/cbt-preview.png"
               alt="CBT Master Preview"
               sx={{
                 width: "100%",
