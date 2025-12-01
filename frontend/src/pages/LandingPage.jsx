@@ -31,6 +31,8 @@ import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import Navbar from "../components/Navbar";
 import { Footer } from "../components/Footer";
 import { Helmet } from "react-helmet";
+import previewImg from "../assets/cbt-preview.png";
+import { useEffect } from "react";
 
 export default function LandingPage() {
   // Hardcoded content (can later be fetched from backend)
@@ -77,6 +79,25 @@ export default function LandingPage() {
       href: "/blog/study-techniques",
     },
   ];
+useEffect(() => {
+  const script1 = document.createElement("script");
+  script1.type = "text/javascript";
+  script1.innerHTML = `
+    atOptions = {
+      'key' : 'efd800066af5754002a75671dd92ec61',
+      'format' : 'iframe',
+      'height' : 90,
+      'width' : 728,
+      'params' : {}
+    };
+  `;
+  document.getElementById("ad-container-728x90").appendChild(script1);
+
+  const script2 = document.createElement("script");
+  script2.type = "text/javascript";
+  script2.src = "//www.highperformanceformat.com/efd800066af5754002a75671dd92ec61/invoke.js";
+  document.getElementById("ad-container-728x90").appendChild(script2);
+}, []);
 
   return (
     <Box sx={{ bgcolor: "#f7f9fc", minHeight: "100vh" }}>
@@ -138,7 +159,8 @@ export default function LandingPage() {
           >
             <Box
               component="img"
-              src="../assets/cbt-preview.png"
+              src={previewImg}
+
               alt="CBT Master Preview"
               sx={{
                 width: "100%",
@@ -519,6 +541,15 @@ export default function LandingPage() {
           ))}
         </Box>
 
+
+<Box sx={{ mt: 4, mb: 4, textAlign: "center" }}>
+  <div id="ad-container-728x90"></div>
+</Box>
+
+
+
+
+
         {/* =========================== FINAL CTA ============================== */}
         <Box
           sx={{
@@ -570,6 +601,12 @@ export default function LandingPage() {
           </Stack>
         </Box>
       </Container>
+
+
+<Box sx={{ mt: 4, mb: 4, textAlign: "center" }}>
+  <div id="ad-container-728x90"></div>
+</Box>
+
 
       {/* SAFE TAWK.TO LOAD (Outside Helmet, below content) */}
       <script
