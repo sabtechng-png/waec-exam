@@ -1,10 +1,16 @@
-// frontend/src/pages/VerifyEmail.jsx
+// ======================================================
+// VerifyEmail.jsx (Improved UI — Logic Preserved)
+// Source: :contentReference[oaicite:5]{index=5}
+// ======================================================
+
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 
 import Navbar from "../components/Navbar";
 import { Footer } from "../components/Footer";
+
+import { Box, Paper, Typography, Button } from "@mui/material";
 import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 
 export default function VerifyEmail() {
@@ -14,34 +20,8 @@ export default function VerifyEmail() {
 
   const [status, setStatus] = useState("loading");
   const [message, setMessage] = useState("Verifying your email...");
-  const [redirectSeconds, setRedirectSeconds] = useState(5);
   const [resending, setResending] = useState(false);
 
-  // ✨ Beautiful Modern Button Style
-  const appButton = {
-    width: "100%",
-    background: "#0d6efd",
-    color: "white",
-    border: "none",
-    padding: "13px 0",
-    fontSize: "16px",
-    fontWeight: 500,
-    borderRadius: "8px",
-    cursor: "pointer",
-    transition: "0.3s",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-    marginTop: "10px",
-  };
-
-  const disabledButton = {
-    ...appButton,
-    background: "#6c757d",
-    cursor: "not-allowed",
-  };
-
-  // -----------------------------
-  // VERIFY EMAIL
-  // -----------------------------
   useEffect(() => {
     if (!token) {
       setStatus("error");
@@ -49,70 +29,45 @@ export default function VerifyEmail() {
       return;
     }
 
-    let cancelled = false;
-
     axios
       .get(`${process.env.REACT_APP_API_URL}/auth/verify-email?token=${token}`)
       .then((res) => {
-        if (cancelled) return;
         const msg = res.data?.message;
 
         if (msg === "Email already verified") {
           setStatus("success");
-          setMessage("Your email has already been verified!");
+          setMessage("Your email is already verified!");
           return;
         }
 
         setStatus("success");
         setMessage("Your email has been verified successfully!");
-
-        let timer = setInterval(() => {
-          setRedirectSeconds((prev) => {
-            if (prev === 1) {
-              clearInterval(timer);
-              navigate("/login");
-            }
-            return prev - 1;
-          });
-        }, 1000);
       })
       .catch((err) => {
-        if (cancelled) return;
         const msg = err?.response?.data?.message;
         setStatus("error");
         setMessage(msg || "Verification link expired or invalid.");
       });
-
-    return () => {
-      cancelled = true;
-    };
   }, [token, navigate]);
 
-  // -----------------------------
-  // RESEND EMAIL
-  // -----------------------------
   const resendEmail = async () => {
     setResending(true);
-
     try {
       const email = localStorage.getItem("pending_email");
       await axios.post(
         `${process.env.REACT_APP_API_URL}/auth/resend-verify-link`,
         { email }
       );
-      alert("A new verification link has been sent.");
+      alert("A new verification email has been sent.");
     } catch {
       alert("Unable to resend verification email.");
     }
-
     setResending(false);
   };
 
   const renderIcon = () => {
     if (status === "loading")
-      return (
-        <div className="spinner-border text-primary mb-3" role="status"></div>
-      );
+      return <div className="spinner-border text-primary mb-3"></div>;
 
     if (status === "success")
       return <FaCheckCircle size={60} color="#28a745" className="mb-3" />;
@@ -124,76 +79,73 @@ export default function VerifyEmail() {
     <>
       <Navbar />
 
-      <div
-        style={{
-          minHeight: "70vh",
+      <Box
+        sx={{
+          minHeight: "78vh",
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          padding: 20,
+          px: 2,
+          py: 5,
         }}
       >
-        <div
-          style={{
+        <Paper
+          elevation={0}
+          sx={{
             width: "100%",
             maxWidth: 480,
-            padding: 30,
-            background: "white",
+            p: 4,
             textAlign: "center",
-            borderRadius: 12,
-            boxShadow: "0 4px 10px rgba(0,0,0,0.12)",
+            borderRadius: 3,
+            border: "1px solid",
+            borderColor: "divider",
           }}
         >
           {renderIcon()}
 
-          <h2>Email Verification</h2>
-          <p className="mb-4">{message}</p>
+          <Typography variant="h5" fontWeight={800} mb={1}>
+            Email Verification
+          </Typography>
 
-          {/* SUCCESS VIEW */}
+          <Typography variant="body1" color="text.secondary" mb={3}>
+            {message}
+          </Typography>
+
           {status === "success" && (
-            <>
-              <button
-                style={appButton}
-                onMouseEnter={(e) => (e.target.style.background = "#0b5ed7")}
-                onMouseLeave={(e) => (e.target.style.background = "#0d6efd")}
-                onClick={() => navigate("/login")}
-              >
-                Go to Login
-              </button>
-
-
-            </>
+            <Button
+              fullWidth
+              variant="contained"
+              sx={{ py: 1.2, borderRadius: 2 }}
+              onClick={() => navigate("/login")}
+            >
+              Go to Login
+            </Button>
           )}
 
-          {/* ERROR VIEW */}
           {status === "error" && (
             <>
-              <button
-                style={appButton}
-                onMouseEnter={(e) => (e.target.style.background = "#0b5ed7")}
-                onMouseLeave={(e) => (e.target.style.background = "#0d6efd")}
+              <Button
+                fullWidth
+                variant="contained"
+                sx={{ py: 1.2, borderRadius: 2, mb: 2 }}
                 onClick={() => navigate("/login")}
               >
                 Back to Login
-              </button>
+              </Button>
 
-              <button
+              <Button
+                fullWidth
                 disabled={resending}
+                variant="outlined"
+                sx={{ py: 1.2, borderRadius: 2 }}
                 onClick={resendEmail}
-                style={resending ? disabledButton : appButton}
-                onMouseEnter={(e) => {
-                  if (!resending) e.target.style.background = "#0b5ed7";
-                }}
-                onMouseLeave={(e) => {
-                  if (!resending) e.target.style.background = "#0d6efd";
-                }}
               >
                 {resending ? "Resending..." : "Resend Verification Email"}
-              </button>
+              </Button>
             </>
           )}
-        </div>
-      </div>
+        </Paper>
+      </Box>
 
       <Footer />
     </>

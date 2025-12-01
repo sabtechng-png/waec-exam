@@ -80,6 +80,8 @@ app.use("/exam", require("./routes/exam/examRoutes"));
 // ============================
 app.use("/auth", require("./routes/authRoutes"));
 app.use("/auth", require("./routes/passwordResetRoutes"));
+app.use("/auth/google", require("./routes/authGoogleRoutes"));
+
 
 // ============================
 // 🚀 START SERVER

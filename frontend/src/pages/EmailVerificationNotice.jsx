@@ -1,6 +1,12 @@
+// ======================================================
+// EmailVerificationNotice.jsx (Improved UI — Logic Preserved)
+// Source: :contentReference[oaicite:3]{index=3}
+// ======================================================
+
 import { Box, Typography, Button, Paper } from "@mui/material";
 import MarkEmailReadIcon from "@mui/icons-material/MarkEmailRead";
 import { Link, useLocation } from "react-router-dom";
+
 import Navbar from "../components/Navbar";
 import { Footer } from "../components/Footer";
 
@@ -14,30 +20,35 @@ export default function EmailVerificationNotice() {
 
       <Box
         sx={{
-          minHeight: "85vh",
+          minHeight: "80vh",
           background: "#f4f6fb",
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
           px: 2,
+          py: 5,
         }}
       >
         <Paper
-          elevation={3}
+          elevation={0}
           sx={{
-            maxWidth: 480,
-            p: 4,
+            width: "100%",
+            maxWidth: 450,
+            p: { xs: 3, md: 4 },
+            borderRadius: 4,
             textAlign: "center",
-            borderRadius: 3,
+            border: "1px solid",
+            borderColor: "divider",
+            background: "white",
           }}
         >
           <MarkEmailReadIcon sx={{ fontSize: 70, color: "#0d6efd", mb: 2 }} />
 
-          <Typography variant="h5" fontWeight={700} gutterBottom>
+          <Typography variant="h5" fontWeight={800} mb={1}>
             Verify Your Email
           </Typography>
 
-          <Typography sx={{ mb: 3, color: "text.secondary" }}>
+          <Typography variant="body1" sx={{ mb: 3, lineHeight: 1.7 }}>
             A 6-digit verification code has been sent to:
             <br />
             <strong>{email}</strong>
@@ -48,18 +59,18 @@ export default function EmailVerificationNotice() {
           <Button
             variant="contained"
             fullWidth
-            sx={{ mb: 2, py: 1.2, borderRadius: 2 }}
-            onClick={() => window.location.href = `https://mail.google.com`}
+            sx={{ py: 1.2, borderRadius: 2, mb: 2 }}
+            onClick={() => window.open("https://mail.google.com", "_blank")}
           >
             Open Gmail
           </Button>
 
           <Button
             variant="outlined"
-            fullWidth
-            sx={{ py: 1.2, borderRadius: 2 }}
             component={Link}
             to={`/verify-email?email=${encodeURIComponent(email)}`}
+            fullWidth
+            sx={{ py: 1.2, borderRadius: 2 }}
           >
             Enter Verification Code
           </Button>

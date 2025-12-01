@@ -1,9 +1,15 @@
-// ======================= ResetPassword.jsx (PREMIUM UI/UX) =======================
+// ======================================================
+// ResetPassword.jsx (Improved UI — Logic Preserved)
+// Source: :contentReference[oaicite:4]{index=4}
+// ======================================================
+
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import api from "../utils/api";
+
 import Navbar from "../components/Navbar";
 import { Footer } from "../components/Footer";
+import { Box, Paper, Typography, TextField, Button } from "@mui/material";
 
 export default function ResetPassword() {
   const navigate = useNavigate();
@@ -17,9 +23,6 @@ export default function ResetPassword() {
   const [validated, setValidated] = useState(true);
   const [error, setError] = useState("");
 
-  // ------------------------------------------------
-  // Validate token on page load
-  // ------------------------------------------------
   useEffect(() => {
     if (!token) {
       setValidated(false);
@@ -39,28 +42,19 @@ export default function ResetPassword() {
       });
   }, [token]);
 
-  // ------------------------------------------------
-  // Handle password reset
-  // ------------------------------------------------
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (password.length < 6) {
+    if (password.length < 6)
       return setError("Password must be at least 6 characters long.");
-    }
 
-    if (password !== confirm) {
-      return setError("Passwords do not match.");
-    }
+    if (password !== confirm) return setError("Passwords do not match.");
 
     setLoading(true);
     setError("");
 
     try {
-      await api.post("/auth/password/reset", {
-        token,
-        password,
-      });
+      await api.post("/auth/password/reset", { token, password });
       navigate("/reset-success");
     } catch (err) {
       const msg =
@@ -72,144 +66,105 @@ export default function ResetPassword() {
     setLoading(false);
   };
 
-  // ------------------------------------------------
-  // Styles
-  // ------------------------------------------------
-  const cardStyle = {
-    width: "100%",
-    maxWidth: 450,
-    padding: "35px 32px",
-    background: "white",
-    borderRadius: "14px",
-    boxShadow: "0 6px 16px rgba(0,0,0,0.12)",
-  };
-
-  const inputStyle = {
-    width: "100%",
-    padding: "12px 14px",
-    borderRadius: "8px",
-    border: "1px solid #ced4da",
-    outline: "none",
-    fontSize: "15px",
-    marginBottom: "18px",
-    transition: "0.25s",
-  };
-
-  const buttonPrimary = {
-    width: "100%",
-    background: "#0d6efd",
-    color: "white",
-    padding: "13px 0",
-    border: "none",
-    borderRadius: "8px",
-    fontSize: "16px",
-    cursor: "pointer",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-    transition: "0.3s",
-    marginTop: "4px",
-  };
-
   return (
     <>
       <Navbar />
 
-      <div
-        style={{
+      <Box
+        sx={{
           minHeight: "78vh",
-          background: "#f4f6fb",
+          bgcolor: "#f4f6fb",
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          padding: "20px",
+          px: 2,
+          py: 6,
         }}
       >
-        <div style={cardStyle}>
-          <h2
-            style={{
-              textAlign: "center",
-              marginBottom: "8px",
-              fontWeight: 700,
-            }}
-          >
+        <Paper
+          elevation={0}
+          sx={{
+            width: "100%",
+            maxWidth: 450,
+            p: 4,
+            borderRadius: 4,
+            border: "1px solid",
+            borderColor: "divider",
+            background: "white",
+          }}
+        >
+          <Typography variant="h5" fontWeight={800} textAlign="center" mb={1}>
             Reset Password
-          </h2>
+          </Typography>
 
-          <p style={{ textAlign: "center", color: "#6c757d", marginBottom: 20 }}>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            textAlign="center"
+            mb={3}
+          >
             Enter your new password below.
-          </p>
+          </Typography>
 
-          {/* ERROR MESSAGE */}
           {error && (
-            <div
-              style={{
-                background: "#f8d7da",
+            <Box
+              sx={{
+                bgcolor: "#f8d7da",
                 color: "#842029",
-                padding: "12px 14px",
-                borderRadius: "8px",
-                marginBottom: "15px",
+                p: 2,
+                borderRadius: 2,
+                mb: 2,
                 fontSize: "14px",
                 textAlign: "center",
               }}
             >
               {error}
-
-              {/* Show request new link button only when invalid */}
               {!validated && (
-                <button
-                  style={{
-                    ...buttonPrimary,
-                    background: "#0d6efd",
-                    marginTop: "15px",
-                  }}
+                <Button
                   onClick={() => navigate("/forgot-password")}
+                  fullWidth
+                  sx={{ mt: 2, borderRadius: 2 }}
+                  variant="contained"
                 >
                   Request New Reset Link
-                </button>
+                </Button>
               )}
-            </div>
+            </Box>
           )}
 
           {validated && (
             <form onSubmit={handleSubmit}>
-              <label style={{ fontWeight: 500 }}>New Password</label>
-              <input
+              <TextField
+                label="New Password"
                 type="password"
+                fullWidth
+                margin="normal"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter new password"
-                style={inputStyle}
-                onFocus={(e) => (e.target.style.border = "1px solid #0d6efd")}
-                onBlur={(e) => (e.target.style.border = "1px solid #ced4da")}
               />
 
-              <label style={{ fontWeight: 500 }}>Confirm Password</label>
-              <input
+              <TextField
+                label="Confirm Password"
                 type="password"
+                fullWidth
+                margin="normal"
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
-                placeholder="Confirm new password"
-                style={inputStyle}
-                onFocus={(e) => (e.target.style.border = "1px solid #0d6efd")}
-                onBlur={(e) => (e.target.style.border = "1px solid #ced4da")}
               />
 
-              <button
+              <Button
                 type="submit"
+                fullWidth
                 disabled={loading}
-                style={buttonPrimary}
-                onMouseEnter={(e) =>
-                  (e.target.style.background = "#0b5ed7")
-                }
-                onMouseLeave={(e) =>
-                  (e.target.style.background = "#0d6efd")
-                }
+                variant="contained"
+                sx={{ mt: 2, py: 1.2, borderRadius: 2 }}
               >
                 {loading ? "Resetting..." : "Reset Password"}
-              </button>
+              </Button>
             </form>
           )}
-        </div>
-      </div>
+        </Paper>
+      </Box>
 
       <Footer />
     </>
