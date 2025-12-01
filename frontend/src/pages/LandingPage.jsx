@@ -122,16 +122,35 @@ export default function LandingPage() {
         <meta name="theme-color" content="#0A3D62" />
       </Helmet>
 
-      {/* ======================================================================= */}
-
       <Navbar />
 
       {/* ============================== HERO =============================== */}
       <Container maxWidth="lg" sx={{ py: { xs: 6, md: 10 } }}>
         <Grid container spacing={6} alignItems="center">
 
-          {/* LEFT SIDE */}
-          <Grid item xs={12} md={6}>
+          {/* RIGHT SIDE IMAGE — appears first on mobile */}
+          <Grid
+            item
+            xs={12}
+            md={6}
+            order={{ xs: 0, md: 1 }}
+            sx={{ textAlign: "center" }}
+          >
+            <Box
+              component="img"
+              src="/cbt-preview.png"
+              alt="CBT Master Preview"
+              sx={{
+                width: "100%",
+                maxWidth: 520,
+                borderRadius: 4,
+                boxShadow: "0 20px 40px rgba(0,0,0,0.08)",
+              }}
+            />
+          </Grid>
+
+          {/* LEFT SIDE TEXT — appears second on mobile */}
+          <Grid item xs={12} md={6} order={{ xs: 1, md: 0 }}>
             <Typography
               variant="h3"
               fontWeight={800}
@@ -192,86 +211,6 @@ export default function LandingPage() {
                 </Typography>
               </Box>
             </Stack>
-          </Grid>
-
-          {/* RIGHT SIDE */}
-          <Grid item xs={12} md={6}>
-            <Card
-              variant="outlined"
-              sx={{
-                borderRadius: 4,
-                boxShadow: "0 20px 60px rgba(15, 23, 42, 0.08)",
-                borderColor: "rgba(148, 163, 184, 0.3)",
-              }}
-            >
-              <CardContent>
-                <Typography
-                  variant="overline"
-                  color="primary"
-                  sx={{ letterSpacing: 1 }}
-                >
-                  Live CBT Preview
-                </Typography>
-
-                <Paper
-                  variant="outlined"
-                  sx={{
-                    p: 3,
-                    mt: 2,
-                    borderRadius: 3,
-                    borderColor: "rgba(148, 163, 184, 0.5)",
-                  }}
-                >
-                  <Typography variant="body2" color="text.secondary">
-                    Question 12 / 50 · Physics (WAEC Style)
-                  </Typography>
-
-                  <Typography variant="h6" sx={{ mt: 1.5 }}>
-                    A body is projected vertically upwards with an initial velocity
-                    <em> u</em>. What is its velocity at the maximum height?
-                  </Typography>
-
-                  <Stack spacing={1.5} sx={{ mt: 2 }}>
-                    {["u", "0", "g", "2u"].map((opt, i) => (
-                      <Paper
-                        key={i}
-                        variant="outlined"
-                        sx={{
-                          p: 1.5,
-                          display: "flex",
-                          gap: 2,
-                          alignItems: "center",
-                          borderRadius: 2,
-                        }}
-                      >
-                        <Avatar
-                          sx={{
-                            width: 28,
-                            height: 28,
-                            bgcolor: "transparent",
-                            border: "1px solid",
-                            borderColor: "divider",
-                            fontSize: 13,
-                          }}
-                        >
-                          {String.fromCharCode(65 + i)}
-                        </Avatar>
-                        <Typography>{opt}</Typography>
-                      </Paper>
-                    ))}
-                  </Stack>
-                </Paper>
-
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ mt: 1.5, display: "block" }}
-                >
-                  Simulated preview. Actual CBT includes timing, subject selection,
-                  question review and full analytics.
-                </Typography>
-              </CardContent>
-            </Card>
           </Grid>
         </Grid>
 
@@ -393,6 +332,16 @@ export default function LandingPage() {
               </Paper>
             </Grid>
           </Grid>
+        </Box>
+
+        {/* =============== INLINE AD BLOCK (before Exam Categories) =============== */}
+        <Box sx={{ mt: 6, mb: 4, textAlign: "center" }}>
+          <div id="container-c9272b516636923aeedfc69498e5dd37"></div>
+          <script
+            async
+            data-cfasync="false"
+            src="//pl28075655.effectivegatecpm.com/c9272b516636923aeedfc69498e5dd37/invoke.js"
+          ></script>
         </Box>
 
         {/* ========================= EXAM CATEGORIES ========================== */}
