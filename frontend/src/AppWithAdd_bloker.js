@@ -9,6 +9,9 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import AnalyticsTracker from "./components/AnalyticsTracker";
 
 // ---------- AdBlock System ----------
+import { useAdBlockGuard } from "./hooks/useAdBlockGuard";
+import AdBlockModal from "./components/AdBlockModal";
+import AdsRequired from "./pages/AdsRequired";
 import PublicExamPage from "./pages/PublicExamPage";
 
 
@@ -19,7 +22,7 @@ import BlogArticlePage from "./pages/BlogArticlePage";
 import WAECPage from "./pages/WaecPage";
 import JAMBPage from "./pages/JAMBPage";
 import NECOPage from "./pages/NECOPage";
-import PracticePage from "./components/PracticePage/PracticePage";
+
 import CookieConsent from "./components/CookieConsent";
 
 // ---------- Auth ----------
@@ -73,13 +76,15 @@ import ProtectedRoute from "./components/ProtectedRoute";
 // WRAPPER: Global AdBlock Guard + Premium Exclusion
 // =====================================================
 function AppWrapper() {
- // const { user } = useAuth();
-//const isPremium = !!user?.isPremium;  // If premium → no ads & no AdBlock warnings
+  const { user } = useAuth();
+  const isPremium = !!user?.isPremium;  // If premium → no ads & no AdBlock warnings
 
-//const { showModal, setShowModal } = useAdBlockGuard({ isPremium });
+  const { showModal, setShowModal } = useAdBlockGuard({ isPremium });
 
   return (
     <>
+      {/* Global less-aggressive modal */}
+      <AdBlockModal open={showModal} onClose={() => setShowModal(false)} />
 
       <Routes>
         {/* ADMIN ROUTES */}
@@ -107,11 +112,10 @@ function AppWrapper() {
         <Route path="/jamb" element={<JAMBPage />} />
         <Route path="/neco" element={<NECOPage />} />
 		<Route path="/practice" element={<PublicExamPage />} />
-      <Route path="/public-exam" element={<PublicExamPage />} />
-
+   
 
         {/* HARD BLOCK PAGE */}
-      
+        <Route path="/ads-required" element={<AdsRequired />} />
 
         {/* AUTH ROUTES (never blocked) */}
         <Route

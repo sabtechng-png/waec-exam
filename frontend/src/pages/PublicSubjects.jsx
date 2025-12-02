@@ -18,6 +18,8 @@ import api from "../utils/api";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet";
 
+import AdBlockAtOptions from "../components/ads/AdBlockAtOptions";
+
 export default function PublicSubjects() {
   const [subjects, setSubjects] = useState([]);
   const navigate = useNavigate();
@@ -142,7 +144,15 @@ export default function PublicSubjects() {
           ))}
         </Grid>
       </Container>
-
+     {/* ⭐ SECOND AD (ATOPTIONS FORMAT) */}
+      <Box sx={{ mt: 6 }}>
+        <AdBlockAtOptions
+          adKey="efd800066af5754002a75671dd92ec61"
+          id="ad-bottom-section"
+          width={728}
+          height={90}
+        />
+      </Box>
       {/* ================== SAFE TAWK SCRIPT ================== */}
       <script
         async

@@ -14,6 +14,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Navbar from "../components/Navbar";
 import { Footer } from "../components/Footer";
 import { Helmet } from "react-helmet";   // ⭐ ADDED
+import AdBlockAtOptions from "../components/ads/AdBlockAtOptions";
 
 export default function FAQPage() {
   const faqList = [
@@ -78,7 +79,15 @@ export default function FAQPage() {
           ))}
         </Paper>
       </Container>
-
+  {/* ⭐ SECOND AD (ATOPTIONS FORMAT) */}
+      <Box sx={{ mt: 6 }}>
+        <AdBlockAtOptions
+          adKey="efd800066af5754002a75671dd92ec61"
+          id="ad-bottom-section"
+          width={728}
+          height={90}
+        />
+      </Box>
       <Footer />
     </Box>
   );
