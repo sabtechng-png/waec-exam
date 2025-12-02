@@ -69,6 +69,8 @@ app.use("/dashboard", require("./routes/dashboardRoutes"));
 
 // Public homepage subjects
 app.use("/public", require("./routes/publicSubjectRoutes"));
+app.use("/public/exam", require("./routes/publicExamRoutes"));
+
 
 // ============================
 // 🧪 EXAM ROUTES

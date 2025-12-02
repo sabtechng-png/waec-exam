@@ -6,4 +6,6 @@ router.use("/", require("./examAnswerRoutes"));
 router.use("/", require("./examSubmitRoutes"));
 router.use("/", require("./examResultRoutes"));
 
+
+
 module.exports = router;
