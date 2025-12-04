@@ -11,11 +11,14 @@ import {
   useMediaQuery,
   List,
 } from "@mui/material";
+
 import MenuIcon from "@mui/icons-material/Menu";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
+
 import { useTheme } from "@mui/material/styles";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
+
 import SidebarMenu from "../components/SidebarMenu";
 import { useAuth } from "../context/AuthContext";
 
@@ -31,14 +34,15 @@ export default function AdminLayout() {
   const { user, logout } = useAuth();
   const displayName = user?.full_name || "Admin";
 
-  const toggleDrawer = () => setMobileOpen(!mobileOpen);
+  const toggleDrawer = () => setMobileOpen((prev) => !prev);
 
   const items = [
     { label: "Dashboard", to: "/admin", icon: "dashboard" },
     { label: "Manage Users", to: "/admin/users", icon: "settings" },
     { label: "Subjects", to: "/admin/subjects", icon: "subjects" },
     { label: "Upload Questions", to: "/admin/questions", icon: "practice" },
-	  { label: "Manage Questions", to: "/admin/manage-questions", icon: "practice" },
+    { label: "Manage Questions", to: "/admin/manage-questions", icon: "practice" },
+    { label: "English Questions", to: "/admin/english", icon: "subjects" },
     { label: "Analytics", to: "/admin/analytics", icon: "leaderboard" },
     { label: "Logout", to: "/logout", icon: "logout" },
   ];
@@ -52,10 +56,7 @@ export default function AdminLayout() {
           items={items}
           activePath={location.pathname}
           onNavigate={(to) => {
-            if (to === "/logout") {
-              logout();
-              return;
-            }
+            if (to === "/logout") return logout();
             navigate(to);
             setMobileOpen(false);
           }}
@@ -67,6 +68,8 @@ export default function AdminLayout() {
   return (
     <Box sx={{ display: "flex" }}>
       <CssBaseline />
+
+      {/* ---------- TOP APP BAR ---------- */}
       <AppBar
         position="fixed"
         elevation={0}
@@ -76,7 +79,7 @@ export default function AdminLayout() {
           borderColor: "divider",
           height: appBarHeight,
           justifyContent: "center",
-          zIndex: (t) => t.zIndex.drawer + 1,
+          zIndex: (t) => t.zIndex.drawer + 2, // prevent overlay issues
         }}
       >
         <Toolbar sx={{ minHeight: appBarHeight, px: 2 }}>
@@ -85,9 +88,11 @@ export default function AdminLayout() {
               <MenuIcon />
             </IconButton>
           )}
+
           <Typography variant="h6" sx={{ fontWeight: 800 }}>
             CBT Master — Admin Panel
           </Typography>
+
           <Box sx={{ ml: "auto", display: "flex", alignItems: "center", gap: 1.5 }}>
             <AccountCircleIcon color="action" />
             <Typography variant="body2" color="text.secondary">
@@ -100,27 +105,37 @@ export default function AdminLayout() {
         </Toolbar>
       </AppBar>
 
-      {/* Left Drawer */}
+      {/* ---------- LEFT DRAWER ---------- */}
       <Box component="nav" sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}>
-        {/* Mobile */}
+        
+        {/* MOBILE DRAWER */}
         <Drawer
           variant="temporary"
           open={mobileOpen}
           onClose={toggleDrawer}
-          ModalProps={{ keepMounted: true }}
+          ModalProps={{
+            keepMounted: false,
+            disableScrollLock: true,
+            hideBackdrop: true,  // THIS FIXES INPUT TYPING BLOCK
+          }}
           sx={{
             display: { xs: "block", md: "none" },
-            "& .MuiDrawer-paper": { boxSizing: "border-box", width: drawerWidth },
+            "& .MuiDrawer-paper": {
+              width: drawerWidth,
+              boxSizing: "border-box",
+              zIndex: (t) => t.zIndex.drawer + 3, // above backdrop
+            },
           }}
         >
           {drawer}
         </Drawer>
-        {/* Desktop */}
+
+        {/* DESKTOP DRAWER */}
         <Drawer
           variant="permanent"
           sx={{
             display: { xs: "none", md: "block" },
-            "& .MuiDrawer-paper": { boxSizing: "border-box", width: drawerWidth },
+            "& .MuiDrawer-paper": { width: drawerWidth, boxSizing: "border-box" },
           }}
           open
         >
@@ -128,13 +143,12 @@ export default function AdminLayout() {
         </Drawer>
       </Box>
 
-      {/* Main content */}
+      {/* ---------- MAIN CONTENT ---------- */}
       <Box
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
-          pt: 3,
+          p: { xs: 1.5, md: 3 },
           width: { md: `calc(100% - ${drawerWidth}px)` },
         }}
       >

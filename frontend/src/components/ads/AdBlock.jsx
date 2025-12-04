@@ -1,58 +1,48 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 
-export default function AdBlock({ adKey, width = 728, height = 90, id }) {
-  const ref = useRef(null);
+export default function AdBlockRaw({ scriptSrc, containerId, refreshInterval = 5000 }) {
+  const [isLoading, setIsLoading] = useState(true);  // Track loading state
+  const containerRef = useRef(null);  // Ref for the container to manage ad rendering
 
   useEffect(() => {
-    if (!ref.current) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            loadAd();
-            observer.disconnect();
-          }
-        });
-      },
-      { threshold: 0.1 }
-    );
-
-    observer.observe(ref.current);
-
-    function loadAd() {
-      const container = document.getElementById(id);
+    const loadAd = () => {
+      const container = containerRef.current;
       if (!container) return;
 
+      // Clear existing ad content
       container.innerHTML = "";
 
-      // ❗️ GLOBAL atOptions (required)
-      window.atOptions = {
-        key: adKey,
-        format: "iframe",
-        height: height,
-        width: width,
-        params: {},
-      };
-
-      // Load provider script
       const script = document.createElement("script");
-      script.type = "text/javascript";
-      script.src = `//www.highperformanceformat.com/${adKey}/invoke.js`;
+      script.async = true;
+      script.src = scriptSrc;
+
+      // Set loading state when script starts loading
+      script.onload = () => setIsLoading(false);
+      script.onerror = () => setIsLoading(false);  // Handle error
+
       container.appendChild(script);
-    }
-  }, [adKey, width, height, id]);
+    };
+
+    // Initial ad load
+    loadAd();
+
+    // Refresh the ad at the specified interval
+    const intervalId = setInterval(() => {
+      loadAd();  // Load a new ad every refreshInterval
+      setIsLoading(true);  // Set loading state while refreshing
+    }, refreshInterval);
+
+    // Cleanup on unmount
+    return () => clearInterval(intervalId);
+  }, [scriptSrc, refreshInterval]);  // Dependencies to trigger re-render on scriptSrc change
 
   return (
     <div
-      ref={ref}
-      id={id}
-      style={{
-        width: "100%",
-        textAlign: "center",
-        margin: "20px 0",
-        minHeight: height,
-      }}
-    ></div>
+      id={containerId}
+      ref={containerRef}  // Use ref to manage container directly
+      style={{ width: "100%", textAlign: "center", margin: "20px 0" }}
+    >
+      {isLoading && <div>Loading ad...</div>}  {/* Loading spinner or message */}
+    </div>
   );
 }

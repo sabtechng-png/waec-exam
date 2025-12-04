@@ -60,11 +60,25 @@ import ManageSubjectsPage from "./pages/admin/ManageSubjectsPage";
 import AdminManageUsers from "./pages/admin/AdminManageUsers";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminQuestionsPage from "./pages/admin/AdminQuestionsPage";
+import ObjectiveQuestionsList from "./pages/admin/english/ObjectiveQuestionsList";
+
+// ADMIN PAGES - ENGLISH
+import EnglishManagerPage from "./pages/admin/english/EnglishManagerPage";
+import PassageList from "./pages/admin/english/PassageList";
+import PassageForm from "./pages/admin/english/PassageForm";
+import PassageQuestionsForm from "./pages/admin/english/PassageQuestionsForm";
+import ObjectiveQuestionsForm from "./pages/admin/english/ObjectiveQuestionsForm";
+import SectionConfigPage from "./pages/admin/english/SectionConfigPage";
+
+
 
 // ---------- Exam ----------
 import ExamPage from "./pages/exam/ExamPage";
+import EnglishExamPage from "./pages/exam/EnglishExamPage";
 import AttemptHistory from "./pages/exam/AttemptHistory";
 import ReviewPage from "./pages/exam/ReviewPage";
+
+
 
 // ---------- Protected Route ----------
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -97,7 +111,38 @@ function AppWrapper() {
           <Route path="questions" element={<UploadQuestionsPage />} />
           <Route path="analytics" element={<AdminAnalytics />} />
           <Route path="manage-questions" element={<AdminQuestionsPage />} />
-        </Route>
+	 
+      {/* ADMIN MAIN ENGLISH MANAGER */}
+      <Route path="english" element={<EnglishManagerPage />} />
+
+      {/* PASSAGES */}
+      <Route path="english/passages" element={<PassageList />} />
+      <Route path="english/passages/new" element={<PassageForm />} />
+      <Route path="english/passages/:id" element={<PassageForm />} />
+
+      {/* PASSAGE QUESTIONS */}
+      <Route
+        path="english/passages/questions/:passageId"
+        element={<PassageQuestionsForm />}
+      />
+
+
+
+      {/* OBJECTIVE QUESTIONS */}
+      <Route
+        path="english/objectives"
+        element={<ObjectiveQuestionsForm />}
+      />
+
+ <Route
+    path="english/objectives/list"
+    element={<ObjectiveQuestionsList />}
+  />
+      {/* SECTION CONFIG */}
+      <Route path="english/config" element={<SectionConfigPage />} />
+			  
+	
+  </Route>
 
         {/* PUBLIC ROUTES (ad-protected pages included) */}
         <Route path="/" element={<LandingPage />} />
@@ -144,6 +189,11 @@ function AppWrapper() {
             </ProtectedRoute>
           }
         />
+		
+		
+		<Route path="/english-exam/:examId" element={<EnglishExamPage />} />
+
+
         <Route
           path="/exam/history/:subjectId"
           element={
@@ -188,7 +238,9 @@ function AppWrapper() {
         <Route path="/email-verification-notice" element={<EmailVerificationNotice />} />
         <Route path="/registration-success" element={<RegistrationSuccess />} />
         <Route path="/subjects" element={<PublicSubjects />} />
-		
+
+
+	 
 
         
 

@@ -1,5 +1,5 @@
 // ========================================================
-// ManageSubjectsPage.jsx — FULL CORRECTED VERSION
+// ManageSubjectsPage.jsx — FIXED ENGLISH CHECK
 // ========================================================
 import React, { useEffect, useState } from "react";
 import {
@@ -53,29 +53,59 @@ export default function ManageSubjectsPage() {
     loadSubjects();
   }, []);
 
-  // -----------------------------------------
-  // Actions
-  // -----------------------------------------
-  const startExam = async (subjectId) => {
-    try {
-      setLoadingAction(subjectId);
-      const res = await api.post("/exam/start", { subject_id: subjectId });
+// -----------------------------------------
+// Start Exam (English gets its own route)
+// -----------------------------------------
+const startExam = async (subjectId) => {
+  try {
+    setLoadingAction(subjectId);
+
+    const subjectIdNum = Number(subjectId);
+
+    // 🔥 SPECIAL: English uses its own exam engine
+    if (subjectIdNum === 3) {
+      const res = await api.post("/english-exam/start", {
+        subject_id: subjectIdNum,
+      });
+
       if (res.status === 200 && res.data?.exam?.id) {
-        navigate(`/exam/${subjectId}`, { state: { exam_id: res.data.exam.id } });
-      } else {
-        setToast({ open: true, message: "Unable to start exam", severity: "error" });
+        // ✅ FIXED — use REAL EXAM ID in the URL
+        return navigate(`/english-exam/${res.data.exam.id}`);
       }
-    } catch (err) {
-      console.error("Start exam error:", err);
+
       setToast({
         open: true,
-        message: err.response?.data?.message || "Unable to start exam",
+        message: "Unable to start English exam",
         severity: "error",
       });
-    } finally {
+
       setLoadingAction(null);
+      return;
     }
-  };
+
+    // 🔥 All other subjects use normal engine
+    const res = await api.post("/exam/start", { subject_id: subjectIdNum });
+
+    if (res.status === 200 && res.data?.exam?.id) {
+      navigate(`/exam/${res.data.exam.id}`);
+    } else {
+      setToast({
+        open: true,
+        message: "Unable to start exam",
+        severity: "error",
+      });
+    }
+  } catch (err) {
+    console.error("Start exam error:", err);
+    setToast({
+      open: true,
+      message: err.response?.data?.message || "Unable to start exam",
+      severity: "error",
+    });
+  } finally {
+    setLoadingAction(null);
+  }
+};
 
   const resetSubject = async (subjectId) => {
     try {
@@ -107,7 +137,6 @@ export default function ManageSubjectsPage() {
   const inProgressCount = subjects.filter((s) => s.registered_status === "in_progress").length;
   const completedCount = subjects.filter((s) => s.registered_status === "completed").length;
 
-  // Filter by tab
   const filtered = subjects.filter((s) => s.registered_status === tab);
 
   const chipColor = {

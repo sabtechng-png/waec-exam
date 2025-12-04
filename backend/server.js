@@ -14,6 +14,10 @@ const app = express();
 // 🛠 AUTO DELETE UNVERIFIED USERS
 // ============================
 const cleanupUnverifiedUsers = require("./cron/cleanupUnverified");
+const englishAdminRoutes = require("./routes/admin/englishAdminRoutes");
+
+
+
 
 // run once daily
 setInterval(cleanupUnverifiedUsers, 24 * 60 * 60 * 1000);
@@ -59,6 +63,8 @@ app.use("/admin/questions", require("./routes/questionsManageRoutes"));
 app.use("/admin/questions", require("./routes/questionsUploadRoutes"));
 app.use("/admin/questions", require("./routes/questionsBulkOpsRoutes"));
 
+app.use("/admin/english", englishAdminRoutes);
+
 // ============================
 // 🎓 STUDENT ROUTES
 // ============================
@@ -76,6 +82,17 @@ app.use("/public/exam", require("./routes/publicExamRoutes"));
 // 🧪 EXAM ROUTES
 // ============================
 app.use("/exam", require("./routes/exam/examRoutes"));
+
+
+// ============================
+// 📝 ENGLISH EXAM ROUTES
+// ============================
+app.use("/english-exam", require("./routes/exam/english/englishStartRoutes"));
+app.use("/english-exam", require("./routes/exam/english/englishQuestionRoutes"));
+app.use("/english-exam", require("./routes/exam/english/englishAnswerRoutes"));
+app.use("/english-exam", require("./routes/exam/english/englishSubmitRoutes"));
+app.use("/english-exam", require("./routes/exam/english/englishLoadRoutes"));
+
 
 // ============================
 // 🔐 AUTH ROUTES

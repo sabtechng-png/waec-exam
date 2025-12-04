@@ -11,6 +11,8 @@ import {
   Typography,
 } from "@mui/material";
 import api from "../utils/api";
+import AdBlockRaw from "../components/ads/AdBlockRaw";
+import AdBlockAtOptions from "../components/ads/AdBlockAtOptions";
 
 export default function PublicExamPage() {
   const [questions, setQuestions] = useState([]);
@@ -18,6 +20,9 @@ export default function PublicExamPage() {
   const [answers, setAnswers] = useState({});
   const [loading, setLoading] = useState(true);
   const [result, setResult] = useState(null);
+
+  // State to trigger the ad refresh
+  const [adKey, setAdKey] = useState(Math.random());
 
   // Fetch public questions
   useEffect(() => {
@@ -51,6 +56,13 @@ export default function PublicExamPage() {
 
   // Submit demo exam
   const handleSubmit = async () => {
+    const unselectedAnswers = Object.values(answers).some((sel) => !sel);
+
+    if (unselectedAnswers) {
+      alert("Please answer all questions before submitting.");
+      return; // Do not submit if any question is unanswered
+    }
+
     const payload = Object.entries(answers).map(([qId, sel]) => ({
       question_id: Number(qId),
       selected_option: sel,
@@ -64,6 +76,21 @@ export default function PublicExamPage() {
     }
   };
 
+  // Disable the "Next" button if the current question is unanswered
+  const isNextDisabled = !answers[questions[qIndex]?.id];
+
+  // Function to handle the "Next" button click
+  const handleNext = () => {
+    setQIndex(qIndex + 1);
+    setAdKey(Math.random());  // Trigger ad refresh on Next
+  };
+
+  // Function to handle option selection
+  const handleOptionSelect = (qId, selectedOption) => {
+    setAnswers({ ...answers, [qId]: selectedOption });
+    setAdKey(Math.random());  // Trigger ad refresh when an option is selected
+  };
+
   // If result exists → show result page
   if (result)
     return (
@@ -74,8 +101,20 @@ export default function PublicExamPage() {
           </Typography>
 
           <Typography sx={{ mt: 2 }}>
-            Correct: {result.correct} | Wrong: {result.wrong}
+            Correct: {result.correct} | Wrong: {result.wrong} | Unselected: {result.unselected}
           </Typography>
+
+          <Typography sx={{ mt: 2 }}>
+            Detailed Analysis:
+          </Typography>
+          {result.analysis.map((item, idx) => (
+            <Box key={idx} sx={{ mt: 1 }}>
+              <Typography>
+                Question {idx + 1}: Selected: {item.selected_option || "None"} | Correct: {item.correct_option}
+                {item.is_correct ? " (Correct)" : item.is_wrong ? " (Wrong)" : " (No Answer)"}
+              </Typography>
+            </Box>
+          ))}
 
           <Button
             variant="contained"
@@ -86,6 +125,26 @@ export default function PublicExamPage() {
             Create Free Account to Access Full CBT
           </Button>
         </Paper>
+
+        {/* Ad Block 1 */}
+        <Box sx={{ mt: 6 }}>
+          <AdBlockRaw
+            key={adKey}  // Use the adKey to trigger re-render of the ad
+            scriptSrc="//pl28075655.effectivegatecpm.com/c9272b516636923aeedfc69498e5dd37/invoke.js"
+            containerId="container-c9272b516636923aeedfc69498e5dd37"
+          />
+        </Box>
+
+        {/* Ad Block 2 */}
+        <Box sx={{ mt: 6 }}>
+          <AdBlockAtOptions
+            key={adKey}  // Use the adKey to trigger re-render of the ad
+            adKey="efd800066af5754002a75671dd92ec61"
+            id="ad-bottom-section"
+            width={728}
+            height={90}
+          />
+        </Box>
       </Container>
     );
 
@@ -121,9 +180,7 @@ export default function PublicExamPage() {
                     border: selected ? "2px solid #1976d2" : "1px solid #ccc",
                     background: selected ? "#e3f2fd" : "#fff",
                   }}
-                  onClick={() =>
-                    setAnswers({ ...answers, [q.id]: opt })
-                  }
+                  onClick={() => handleOptionSelect(q.id, opt)} // Update the answer and refresh ad
                 >
                   <Typography>
                     <strong>{opt}.</strong> {q[`option_${opt.toLowerCase()}`]}
@@ -145,16 +202,40 @@ export default function PublicExamPage() {
           </Button>
 
           {qIndex === questions.length - 1 ? (
-            <Button variant="contained" color="error" onClick={handleSubmit}>
+            <Button variant="contained" color="error" onClick={handleSubmit} disabled={isNextDisabled}>
               Submit Demo
             </Button>
           ) : (
-            <Button variant="contained" onClick={() => setQIndex(qIndex + 1)}>
+            <Button
+              variant="contained"
+              onClick={handleNext}
+              disabled={isNextDisabled} // Disable Next button if unanswered
+            >
               Next
             </Button>
           )}
         </Box>
       </Paper>
+
+      {/* Ad Block 1 */}
+      <Box sx={{ mt: 6 }}>
+        <AdBlockRaw
+          key={adKey}  // Use the adKey to trigger re-render of the ad
+          scriptSrc="//pl28075655.effectivegatecpm.com/c9272b516636923aeedfc69498e5dd37/invoke.js"
+          containerId="container-c9272b516636923aeedfc69498e5dd37"
+        />
+      </Box>
+
+      {/* Ad Block 2 */}
+      <Box sx={{ mt: 6 }}>
+        <AdBlockAtOptions
+          key={adKey}  // Use the adKey to trigger re-render of the ad
+          adKey="efd800066af5754002a75671dd92ec61"
+          id="ad-bottom-section"
+          width={728}
+          height={90}
+        />
+      </Box>
     </Container>
   );
 }

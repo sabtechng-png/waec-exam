@@ -1,23 +1,22 @@
-// routes/publicExamRoutes.js
 const express = require("express");
 const router = express.Router();
 const { pool } = require("../db"); // adjust path if needed
 
 /*
 =========================================================
- PUBLIC CBT DEMO EXAM ROUTES
- No login required, no exam_sessions, no saving.
+PUBLIC CBT DEMO EXAM ROUTES
+No login required, no exam_sessions, no saving.
 =========================================================
 */
 
 /*
 ---------------------------------------------------------
- 1) GET 10 RANDOM QUESTIONS FOR PUBLIC DEMO
-    PRESET: subject_id = 2  (as user requested)
+1) GET 10 RANDOM QUESTIONS FOR PUBLIC DEMO
+    PRESET: subject_id = 2 (as user requested)
 ---------------------------------------------------------
 */
 router.get("/questions", async (req, res) => {
-	  console.log("🔥 Public exam route hit");
+  console.log("🔥 Public exam route hit");
 
   try {
     const result = await pool.query(
@@ -28,7 +27,8 @@ router.get("/questions", async (req, res) => {
         option_a,
         option_b,
         option_c,
-        option_d
+        option_d,
+        correct_option
       FROM questions
       WHERE subject_id = 2
       ORDER BY RANDOM()
@@ -56,7 +56,7 @@ router.get("/questions", async (req, res) => {
 
 /*
 ---------------------------------------------------------
- 2) SUBMIT PUBLIC DEMO AND SCORE
+2) SUBMIT PUBLIC DEMO AND SCORE
 ---------------------------------------------------------
 */
 router.post("/submit", async (req, res) => {
@@ -93,15 +93,42 @@ router.post("/submit", async (req, res) => {
 
     let correct = 0;
     let wrong = 0;
+    let unselected = 0;
+    let analysis = [];
 
     answers.forEach((item) => {
       const correctOpt = correctMap.get(item.question_id);
       const userOpt = item.selected_option?.toUpperCase();
 
-      if (!userOpt) return;
-
-      if (userOpt === correctOpt) correct++;
-      else wrong++;
+      // If no answer is selected, treat it as wrong
+      if (!userOpt) {
+        wrong++;  // Mark unselected options as wrong
+        analysis.push({
+          question_id: item.question_id,
+          selected_option: "None",  // No option selected
+          correct_option: correctOpt,
+          is_correct: 0,
+          is_wrong: 1,
+        });
+      } else if (userOpt === correctOpt) {
+        correct++;
+        analysis.push({
+          question_id: item.question_id,
+          selected_option: userOpt,
+          correct_option: correctOpt,
+          is_correct: 1,
+          is_wrong: 0,
+        });
+      } else {
+        wrong++;
+        analysis.push({
+          question_id: item.question_id,
+          selected_option: userOpt,
+          correct_option: correctOpt,
+          is_correct: 0,
+          is_wrong: 1,
+        });
+      }
     });
 
     const total = answers.length;
@@ -112,7 +139,9 @@ router.post("/submit", async (req, res) => {
       total,
       correct,
       wrong,
+      unselected,
       score,
+      analysis,
     });
   } catch (err) {
     console.error("🔥 Public Submit Error:", err);
