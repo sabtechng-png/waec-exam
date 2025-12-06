@@ -45,6 +45,8 @@ import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import ContactPage from "./pages/ContactPage";
 import FAQPage from "./pages/FAQPage";
 import TermsPage from "./pages/TermsPage";
+import GoogleSuccess from "./pages/GoogleSuccess";
+
 
 // ---------- Dashboard ----------
 import DashboardLayout from "./layout/DashboardLayout";
@@ -166,6 +168,8 @@ function AppWrapper() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/reset-success" element={<ResetPasswordSuccess />} />
+		<Route path="/google-success" element={<GoogleSuccess />} />
+
 
         {/* ---------------- EXAM ROUTES ---------------- */}
         <Route

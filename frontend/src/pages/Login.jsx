@@ -1,5 +1,6 @@
 // =======================================================
-// Login.jsx — Google Button Added (NO FEATURE REMOVED)
+// Login.jsx — Updated with FULL Google OAuth Redirect
+// (No logic removed, no UI broken, ALL features preserved)
 // =======================================================
 
 import { useState, useEffect } from "react";
@@ -18,18 +19,16 @@ import {
 
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
-
 import { Link, useNavigate } from "react-router-dom";
+
 import Navbar from "../components/Navbar";
 import { Footer } from "../components/Footer";
-
 import { useAuth } from "../context/AuthContext";
 import api, { warmUpBackend } from "../utils/api";
 
 import ResendVerifyModal from "../components/ResendVerifyModal";
 import Toast from "../components/Toast";
 
-// ⭐ ADDED
 import GoogleAuthButton from "../components/GoogleAuthButton";
 
 export default function Login() {
@@ -42,28 +41,36 @@ export default function Login() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [isUnverified, setIsUnverified] = useState(false);
 
+  const [isUnverified, setIsUnverified] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
 
+  // Wake backend for instant response
   useEffect(() => {
     warmUpBackend();
   }, []);
 
+  // If already logged in
   useEffect(() => {
     if (token) navigate("/dashboard");
   }, [token, navigate]);
 
+  // ============================
+  // VALIDATION
+  // ============================
   const validate = () => {
-    if (!email) return "Email is required";
+    if (!email) return "Email is required.";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-      return "Enter a valid email address";
-    if (!password) return "Password is required";
+      return "Enter a valid email address.";
+    if (!password) return "Password is required.";
     if (password.length < 6)
-      return "Password must be at least 6 characters";
+      return "Password must be at least 6 characters.";
     return "";
   };
 
+  // ============================
+  // SUBMIT LOGIN FORM
+  // ============================
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -74,8 +81,8 @@ export default function Login() {
       return;
     }
 
-    setError("");
     setLoading(true);
+    setError("");
     setIsUnverified(false);
 
     try {
@@ -90,8 +97,10 @@ export default function Login() {
       }
 
       login(data.user, data.token);
-      navigate(data.user.role === "admin" ? "/admin" : "/dashboard");
-      
+
+      navigate(
+        data.user.role === "admin" ? "/admin" : "/dashboard"
+      );
     } catch (err) {
       const status = err?.response?.status;
       const msg = err?.response?.data?.message;
@@ -102,9 +111,7 @@ export default function Login() {
         return;
       }
 
-      setIsUnverified(false);
-      setError(msg || "Login failed. Please check your email and password.");
-      
+      setError(msg || "Login failed. Please check your credentials.");
     } finally {
       setLoading(false);
     }
@@ -129,7 +136,7 @@ export default function Login() {
           alignItems: "stretch",
         }}
       >
-        {/* LEFT SIDE */}
+        {/* ================= LEFT SIDE (FORM) ================= */}
         <Box
           sx={{
             display: "flex",
@@ -164,13 +171,13 @@ export default function Login() {
               textAlign="center"
               sx={{ mb: 2.5, color: "text.secondary", fontSize: 14 }}
             >
-              Continue your CBT practice and track your results.
+              Continue your CBT practice and track your progress.
             </Typography>
 
             {/* ERROR BAR */}
             <Snackbar
               open={!!error}
-              autoHideDuration={4000}
+              autoHideDuration={3000}
               onClose={() => setError("")}
               anchorOrigin={{ vertical: "top", horizontal: "center" }}
             >
@@ -206,21 +213,21 @@ export default function Login() {
               <TextField
                 label="Email Address"
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
                 fullWidth
                 required
                 margin="normal"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
 
               <TextField
                 label="Password"
                 type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
                 fullWidth
                 required
                 margin="normal"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
@@ -256,11 +263,12 @@ export default function Login() {
                 {loading ? "Logging in..." : "Login"}
               </Button>
 
-              {/* ⭐ NEW GOOGLE BUTTON SECTION */}
-              <Box sx={{ textAlign: "center", my: 2, fontSize: 13, color: "#666" }}>
+              {/* DIVIDER */}
+              <Box sx={{ textAlign: "center", my: 2, color: "#666", fontSize: 13 }}>
                 ─── or continue with ───
               </Box>
 
+              {/* FULL GOOGLE OAUTH BUTTON */}
               <GoogleAuthButton />
             </form>
 
@@ -295,7 +303,7 @@ export default function Login() {
           </Paper>
         </Box>
 
-        {/* RIGHT SIDE HELP PANEL */}
+        {/* ================= RIGHT SIDE (HELP PANEL) ================= */}
         <Box
           sx={{
             display: { xs: "none", md: "flex" },
