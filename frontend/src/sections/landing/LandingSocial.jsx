@@ -28,7 +28,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import ResponsiveAdsterraBanner from "../../components/ads/ResponsiveAdsterraBanner";
-
+import SingleAdsterraInject from "../../components/ads/SingleAdsterraInject";
 import AdBlockAtOptions from "../../components/ads/AdBlockAtOptions";
 
 export default function LandingSocial() {
@@ -135,6 +135,10 @@ export default function LandingSocial() {
           </Grid>
         </Grid>
       </Box>
+
+
+{/* ⭐ INSERT MOBILE AD BEFORE FAQ */}
+<SingleAdsterraInject />
 
       {/* FAQ */}
       <Box sx={{ mt: 10 }}>
