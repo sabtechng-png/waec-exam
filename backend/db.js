@@ -1,6 +1,6 @@
-// =====================================
-// 🚀 Optimized PostgreSQL Connection
-// =====================================
+// =========================================================
+// db.js — Using Destructuring-Friendly Export { pool }
+// =========================================================
 
 const { Pool } = require("pg");
 
@@ -8,16 +8,16 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
     require: true,
-    rejectUnauthorized: false, // Needed for Render/NeonDB SSL
+    rejectUnauthorized: false, // NeonDB / Render requirement
   },
-  max: 20,        // More pooled connections for faster queries
+  max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
 });
 
-// Graceful handling of connection errors
-pool.on("error", (err) => {
-  console.error("🔴 Unexpected PostgreSQL idle client error", err);
+// Connection warm-up
+pool.on("connect", () => {
+  console.log("Database connection warmed up");
 });
 
-module.exports = { pool };
+module.exports = { pool };   // ⬅⬅⬅ ENABLES: const { pool } = require("../db");

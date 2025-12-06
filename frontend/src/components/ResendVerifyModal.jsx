@@ -1,61 +1,142 @@
-import { useState } from "react";
-import { Modal, Box, Typography, TextField, Button } from "@mui/material";
+// ========================================================================
+// ResendVerifyModal.jsx — FINAL SMART VERSION
+// Detects: Already verified / Sent / Unknown email (safe non-enumeration)
+// ========================================================================
+
+import {
+  Modal,
+  Box,
+  TextField,
+  Button,
+  Typography,
+  CircularProgress,
+} from "@mui/material";
+
+import { useState, useEffect } from "react";
 import api from "../utils/api";
 import Toast from "./Toast";
 
-export default function ResendVerifyModal({ open, onClose }) {
-  const [email, setEmail] = useState("");
+export default function ResendVerifyModal({ open, onClose, defaultEmail }) {
+  const [email, setEmail] = useState(defaultEmail || "");
   const [loading, setLoading] = useState(false);
 
-  const handleResend = async () => {
-    if (!email) return Toast.error("Enter your email");
+  useEffect(() => {
+    setEmail(defaultEmail || "");
+  }, [defaultEmail]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!email) {
+      Toast.error("Please enter your email.");
+      return;
+    }
 
     setLoading(true);
 
     try {
-      await api.post("/auth/resend-verify-link", { email });
-      Toast.success("Verification email sent!");
-      onClose();
-    } catch (err) {
-      Toast.error("Unable to send verification email");
-    }
+      const res = await api.post("/auth/resend-verify-link", { email });
 
-    setLoading(false);
+      const msg = res?.data?.message?.toLowerCase() || "";
+
+      // ---------------------------------------------------------
+      // 🔥 CASE 1 — Email is already verified
+      // ---------------------------------------------------------
+      if (msg.includes("already")) {
+        Toast.info("Your email is already verified. Please log in.");
+        localStorage.removeItem("pending_email");
+        onClose();
+        return;
+      }
+
+      // ---------------------------------------------------------
+      // 🔥 CASE 2 — Normal resend (even if email doesn't exist)
+      // ---------------------------------------------------------
+      Toast.success(
+        "If this email exists, a new verification link has been sent."
+      );
+
+      localStorage.setItem("pending_email", email);
+
+      onClose();
+
+    } catch (err) {
+      // ---------------------------------------------------------
+      // 🔥 CASE 3 — Server / network error
+      // ---------------------------------------------------------
+      Toast.error("Unable to resend link. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <Modal open={open} onClose={onClose}>
       <Box
         sx={{
+          width: "90%",
+          maxWidth: 420,
+          bgcolor: "white",
           p: 4,
-          maxWidth: 400,
+          borderRadius: 3,
           mx: "auto",
           mt: "15vh",
-          bgcolor: "white",
-          borderRadius: 3,
+          boxShadow: 24,
         }}
       >
-        <Typography variant="h6" fontWeight={700} mb={2}>
+        <Typography
+          variant="h6"
+          fontWeight={700}
+          textAlign="center"
+          sx={{ mb: 2 }}
+        >
           Resend Verification Email
         </Typography>
 
-        <TextField
-          label="Email address"
-          fullWidth
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          sx={{ mb: 2 }}
-        />
-
-        <Button
-          fullWidth
-          variant="contained"
-          disabled={loading}
-          onClick={handleResend}
-          sx={{ py: 1.2 }}
+        <Typography
+          sx={{
+            mb: 2,
+            color: "text.secondary",
+            fontSize: 14,
+            textAlign: "center",
+          }}
         >
-          {loading ? "Sending..." : "Send Link"}
-        </Button>
+          Enter your email to receive a new verification link.
+        </Typography>
+
+        <form onSubmit={handleSubmit}>
+          <TextField
+            label="Email Address"
+            fullWidth
+            margin="normal"
+            value={email}
+            type="email"
+            onChange={(e) => setEmail(e.target.value)}
+          />
+
+          <Button
+            variant="contained"
+            fullWidth
+            sx={{ py: 1.2, mt: 2 }}
+            disabled={loading}
+            type="submit"
+          >
+            {loading ? (
+              <CircularProgress size={22} color="inherit" />
+            ) : (
+              "Resend Link"
+            )}
+          </Button>
+
+          <Button
+            variant="outlined"
+            fullWidth
+            sx={{ py: 1.2, mt: 1.5 }}
+            onClick={onClose}
+          >
+            Cancel
+          </Button>
+        </form>
       </Box>
     </Modal>
   );

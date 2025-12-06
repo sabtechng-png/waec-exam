@@ -1,212 +1,212 @@
-// backend/routes/passwordResetRoutes.js
-// ===================================================
-//      PASSWORD RESET ROUTES — OPTIMIZED VERSION
-// ===================================================
+// ============================================================================
+// passwordResetRoutes.js — FINAL VERSION (using { pool } destructuring)
+// ============================================================================
 
 const express = require("express");
-const router = express.Router();
-const { pool } = require("../../db");
-const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
+const bcrypt = require("bcryptjs");
 const nodemailer = require("nodemailer");
+const { pool } = require("../../db");  // ⬅⬅⬅ Updated destructuring import
 
-process.env.TZ = "UTC";
+const router = express.Router();
 
-// --------------------------------------
-// EMAIL TRANSPORT (FAST & SECURE)
-// --------------------------------------
+// ============================================================================
+// EMAIL TRANSPORT (SMTP)
+// ============================================================================
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: Number(process.env.SMTP_PORT),
-  secure: true,
+  secure: process.env.SMTP_PORT === "465",
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
 });
 
-// --------------------------------------
-// UTILITY: Reset email template
-// --------------------------------------
-function resetEmailTemplate(name, link) {
-  return `
-    <div style="font-family:Arial;max-width:600px;margin:auto;">
-      <h2 style="color:#0d6efd;">Reset Your Password</h2>
-      <p>Hello <b>${name}</b>,</p>
-
-      <p>Click the button below to reset your password:</p>
-
-      <a href="${link}"
-         style="display:inline-block;background:#0d6efd;color:white;padding:12px 22px;
-         border-radius:8px;text-decoration:none;font-size:16px;margin-top:8px;">
-         Reset Password
-      </a>
-
-      <p style="color:#444;margin-top:18px;">This link expires in <b>15 minutes</b>.</p>
-    </div>
-  `;
-}
-
-// ===================================================
-// POST /auth/password/request
-// Request password reset link
-// ===================================================
+// ============================================================================
+// 1) REQUEST PASSWORD RESET
+// ============================================================================
 router.post("/request", async (req, res) => {
+  const { email } = req.body;
+
+  if (!email)
+    return res.status(400).json({ message: "Email is required." });
+
   try {
-    const { email } = req.body;
+    const emailLower = email.trim().toLowerCase();
 
-    console.log("📩 Password reset request for:", email);
-
-    const q = await pool.query(
-      "SELECT id, full_name FROM users WHERE email=$1 LIMIT 1",
-      [email]
+    const userRes = await pool.query(
+      "SELECT id, email FROM users WHERE email=$1 LIMIT 1",
+      [emailLower]
     );
 
-    // Always return generic response for security (no email leak)
-    if (q.rowCount === 0) {
-      console.log("⚠️ No user found (but returning generic message)");
+    // Prevent email enumeration
+    if (userRes.rows.length === 0) {
       return res.json({
-        message:
-          "If an account exists with this email, a password reset link has been sent.",
+        message: "If an account exists, a reset link has been sent.",
       });
     }
 
-    const user = q.rows[0];
+    const user = userRes.rows[0];
 
-    // Generate secure random token
+    // Generate reset token
     const token = crypto.randomBytes(32).toString("hex");
 
     // Store token + expiry
-    const update = await pool.query(
-      `
-      UPDATE users
-      SET reset_token=$1,
-          reset_token_expiry = NOW() + INTERVAL '15 minutes'
-      WHERE id=$2
-      `,
+    await pool.query(
+      `UPDATE users
+         SET reset_token=$1,
+             reset_token_expiry=NOW() + INTERVAL '15 minutes'
+       WHERE id=$2`,
       [token, user.id]
     );
 
-    if (update.rowCount === 0) {
-      console.error("❌ Failed to update reset token");
-      return res.status(500).json({ message: "Server error" });
-    }
+    const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
 
-    const link = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
+   await transporter.sendMail({
+  from: process.env.FROM_EMAIL,
+  to: user.email,
+  subject: "Reset Your Password",
+  html: `
+    <div style="
+      font-family:Arial,Helvetica,sans-serif;
+      max-width:600px;
+      margin:auto;
+      padding:20px;
+      background:#ffffff;
+      border-radius:8px;
+      border:1px solid #eee;
+    ">
 
-    // Send email
-    await transporter.sendMail({
-      from: process.env.FROM_EMAIL,
-      to: email,
-      subject: "Reset Your Password",
-      html: resetEmailTemplate(user.full_name, link),
-      date: new Date().toUTCString(),
-    });
+      <h2 style="color:#dc3545;text-align:center;margin-bottom:10px;">
+        Reset Your Password
+      </h2>
 
-    console.log("✅ Reset email sent to:", email);
+      <p>Hello,</p>
+
+      <p>You requested to reset your password for your <strong>CBT-Master</strong> account.</p>
+
+      <div style="text-align:center;margin:25px 0;">
+        <a href="${resetLink}" 
+           style="
+             background:#0d6efd;
+             padding:12px 24px;
+             color:#ffffff;
+             font-weight:bold;
+             text-decoration:none;
+             border-radius:6px;
+             display:inline-block;
+           ">
+          Reset Password
+        </a>
+      </div>
+
+      <p>This link expires in <strong>15 minutes</strong>. If you didn’t request this, you can ignore this email.</p>
+
+      <p style="margin-top:25px;color:#666;font-size:13px;text-align:center;">
+        © ${new Date().getFullYear()} CBT-Master
+      </p>
+    </div>
+  `,
+});
 
     return res.json({
-      message:
-        "If an account exists with this email, a password reset link has been sent.",
+      message: "If an account exists, a reset link has been sent.",
     });
+
   } catch (err) {
     console.error("RESET REQUEST ERROR:", err);
-    res.status(500).json({ message: "Server error sending reset link" });
+    return res.status(500).json({
+      message: "Unable to send reset link. Try again later.",
+    });
   }
 });
 
-// ===================================================
-// POST /auth/password/validate-token
-// Check if reset token is valid
-// ===================================================
+// ============================================================================
+// 2) VALIDATE RESET TOKEN
+// ============================================================================
 router.post("/validate-token", async (req, res) => {
+  const { token } = req.body;
+
+  if (!token)
+    return res.status(400).json({ message: "Reset token is required." });
+
   try {
-    const { token } = req.body;
-
-    if (!token) {
-      return res.status(400).json({ message: "Invalid or expired link" });
-    }
-
-    const q = await pool.query(
-      `
-      SELECT id 
-      FROM users
-      WHERE reset_token=$1
-      AND reset_token_expiry > NOW()
-      LIMIT 1
-      `,
+    const result = await pool.query(
+      `SELECT id, reset_token_expiry
+         FROM users
+        WHERE reset_token=$1 LIMIT 1`,
       [token]
     );
 
-    if (q.rowCount === 0) {
-      return res.status(400).json({ message: "Invalid or expired link" });
+    if (result.rows.length === 0)
+      return res.status(400).json({ message: "Invalid or used token." });
+
+    const user = result.rows[0];
+
+    if (new Date(user.reset_token_expiry) < new Date()) {
+      return res.status(400).json({ message: "Token has expired." });
     }
 
-    return res.json({ message: "Valid" });
+    return res.json({ message: "Valid token" });
+
   } catch (err) {
     console.error("VALIDATE TOKEN ERROR:", err);
-    res.status(500).json({ message: "Server error validating link" });
+    return res.status(500).json({ message: "Server error validating token" });
   }
 });
 
-// ===================================================
-// POST /auth/password/reset
-// Reset password using token
-// ===================================================
+// ============================================================================
+// 3) RESET PASSWORD
+// ============================================================================
 router.post("/reset", async (req, res) => {
+  const { token, password } = req.body;
+
+  if (!token)
+    return res.status(400).json({ message: "Token is required." });
+
+  if (!password)
+    return res.status(400).json({ message: "Password is required." });
+
   try {
-    const { token, password } = req.body;
-
-    if (!token || !password) {
-      return res.status(400).json({ message: "Invalid request" });
-    }
-
-    const q = await pool.query(
-      `
-      SELECT id, reset_token_expiry 
-      FROM users 
-      WHERE reset_token=$1
-      LIMIT 1
-      `,
+    const result = await pool.query(
+      `SELECT id, reset_token_expiry
+         FROM users
+        WHERE reset_token=$1 LIMIT 1`,
       [token]
     );
 
-    if (q.rowCount === 0) {
-      return res.status(400).json({
-        message: "This reset link is invalid or has already been used.",
-      });
+    if (result.rows.length === 0)
+      return res.status(400).json({ message: "Invalid or used token." });
+
+    const user = result.rows[0];
+
+    if (new Date(user.reset_token_expiry) < new Date()) {
+      return res.status(400).json({ message: "Token has expired." });
     }
 
-    const user = q.rows[0];
+    const hashed = await bcrypt.hash(password, 12);
 
-    // Check if expired
-    const now = await pool.query("SELECT NOW() as now");
-    if (now.rows[0].now > user.reset_token_expiry) {
-      return res.status(400).json({ message: "Reset link expired" });
-    }
-
-    // Hash new password (bcrypt cost 8 for speed + safety)
-    const hashed = await bcrypt.hash(password, 8);
-
-    // Update password & clear token
     await pool.query(
-      `
-      UPDATE users
-      SET password_hash=$1,
-          reset_token=NULL,
-          reset_token_expiry=NULL
-      WHERE id=$2
-      `,
+      `UPDATE users
+         SET password_hash=$1,
+             reset_token=NULL,
+             reset_token_expiry=NULL
+       WHERE id=$2`,
       [hashed, user.id]
     );
 
-    console.log("✅ Password reset for user:", user.id);
+    return res.json({ message: "Password reset successfully." });
 
-    return res.json({ message: "Password reset successful" });
   } catch (err) {
-    console.error("RESET ERROR:", err);
-    res.status(500).json({ message: "Server error resetting password" });
+    console.error("RESET PASSWORD ERROR:", err);
+    return res.status(500).json({
+      message: "Unable to reset password. Try again later.",
+    });
   }
 });
 
+// ============================================================================
+// EXPORT ROUTER
+// ============================================================================
 module.exports = router;

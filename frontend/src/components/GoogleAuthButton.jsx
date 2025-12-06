@@ -24,21 +24,25 @@ export default function GoogleAuthButton() {
   const [loading, setLoading] = useState(false);
 
   // Load Google Identity script once
-  useEffect(() => {
-    const existing = document.getElementById("google-identity");
-    if (existing) {
-      setScriptLoaded(true);
-      return;
-    }
+useEffect(() => {
+  // Remove any old cached Google script
+  const oldScript = document.getElementById("google-identity");
+  if (oldScript) {
+    oldScript.remove();
+    window.google = undefined;
+  }
 
-    const script = document.createElement("script");
-    script.id = "google-identity";
-    script.src = "https://accounts.google.com/gsi/client";
-    script.async = true;
-    script.defer = true;
-    script.onload = () => setScriptLoaded(true);
-    document.body.appendChild(script);
-  }, []);
+  // Load fresh Google Identity script
+  const script = document.createElement("script");
+  script.id = "google-identity";
+  script.src = "https://accounts.google.com/gsi/client";
+  script.async = true;
+  script.defer = true;
+  script.onload = () => setScriptLoaded(true);
+
+  document.body.appendChild(script);
+}, []);
+
 
   const handleGoogleLogin = () => {
     if (!window.google || !scriptLoaded) {

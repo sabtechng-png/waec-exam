@@ -1,8 +1,10 @@
-// ===========================================
-// RegistrationSuccess.jsx — Final Updated
-// ===========================================
+// ===========================================================
+// RegistrationSuccess.jsx — Final Updated Version
+// Matches new backend verification logic perfectly
+// ===========================================================
+
 import { useLocation, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { Box, Typography, Paper, Button } from "@mui/material";
 
@@ -16,13 +18,29 @@ export default function RegistrationSuccess() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Email passed from Register.jsx via navigate()
-  const email = location?.state?.email || "";
+  // Email passed from Register.jsx
+  const emailState = location?.state?.email;
+
+  // Fallback email in case page is refreshed
+  const pendingEmail = localStorage.getItem("pending_email");
+
+  const email = emailState || pendingEmail || "";
 
   const [modalOpen, setModalOpen] = useState(false);
 
+  useEffect(() => {
+    // If no email info → go back to register (prevents blank page)
+    if (!email) {
+      Toast.error("Email not found. Please register again.");
+      navigate("/register");
+    }
+  }, [email, navigate]);
+
   const handleOpenModal = () => {
-    if (!email) return Toast.error("Email not found.");
+    if (!email) {
+      Toast.error("Email not available.");
+      return;
+    }
     setModalOpen(true);
   };
 
@@ -30,7 +48,7 @@ export default function RegistrationSuccess() {
     <>
       <Navbar />
 
-      {/* Resend verification modal */}
+      {/* Resend Verification Modal */}
       <ResendVerifyModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
@@ -44,7 +62,8 @@ export default function RegistrationSuccess() {
           justifyContent: "center",
           alignItems: "center",
           px: 2,
-          bgColor: "#f4f6fb",
+          py: 4,
+          backgroundColor: "#f4f6fb",
         }}
       >
         <Paper
@@ -68,13 +87,22 @@ export default function RegistrationSuccess() {
             Registration Successful 🎉
           </Typography>
 
-          <Typography sx={{ mb: 3, color: "text.secondary", lineHeight: 1.6 }}>
+          <Typography
+            sx={{
+              mb: 3,
+              color: "text.secondary",
+              lineHeight: 1.6,
+              fontSize: 16,
+            }}
+          >
             A verification link has been sent to:
             <br />
             <strong>{email}</strong>
             <br />
             <br />
-            Please check your inbox (and spam folder) to verify your account.
+            Please check your Inbox and Spam folder to verify your account.
+            <br />
+            You must verify before you can log in.
           </Typography>
 
           <Button
@@ -95,7 +123,9 @@ export default function RegistrationSuccess() {
             Resend Verification Email
           </Button>
 
-          <Typography sx={{ mt: 3, fontSize: 14, color: "text.secondary" }}>
+          <Typography
+            sx={{ mt: 3, fontSize: 14, color: "text.secondary" }}
+          >
             Didn’t receive the email? Click <strong>Resend</strong>.
           </Typography>
         </Paper>

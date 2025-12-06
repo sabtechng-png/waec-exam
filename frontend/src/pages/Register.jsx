@@ -1,7 +1,7 @@
-// =====================================================================
-// Register.jsx — Two-Column UI (Benefits Left, Form Right) + Confirm Password
-// Logic preserved: full_name, email, password -> /auth/register
-// =====================================================================
+// ===========================================================================
+// Register.jsx — Final Updated Version (Matches New Backend Logic Perfectly)
+// ===========================================================================
+
 import { useState } from "react";
 import {
   TextField,
@@ -12,7 +12,6 @@ import {
   IconButton,
   Box,
   Link as MLink,
-  Divider,
   Typography,
   Paper,
 } from "@mui/material";
@@ -23,7 +22,6 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { Footer } from "../components/Footer";
-import GoogleAuthButton from "../components/GoogleAuthButton";
 import api from "../utils/api";
 
 export default function Register() {
@@ -40,22 +38,26 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // ------------------ Validation ------------------
+  // ===========================
+  // VALIDATION
+  // ===========================
   const validate = () => {
     if (!fullName) return "Full name is required";
     if (!email) return "Email is required";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
       return "Enter a valid email address";
     if (!password) return "Password is required";
-    if (password.length < 6)
-      return "Password must be at least 6 characters";
+    if (password.length < 6) return "Password must be at least 6 characters";
     if (password !== confirm) return "Passwords do not match";
     return "";
   };
 
-  // ------------------ Submit Handler ------------------
+  // ===========================
+  // SUBMIT HANDLER
+  // ===========================
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     const v = validate();
     if (v) {
       setError(v);
@@ -66,33 +68,37 @@ export default function Register() {
     setError("");
 
     try {
-      await api.post("/auth/register", {
-        full_name: fullName, // ✅ matches DB column
+      const res = await api.post("/auth/register", {
+        full_name: fullName, // ⚡ keeps your existing DB structure
         email,
         password,
       });
 
-      // Optional: save email for later use (resend verification, etc.)
+      // Save pending email for resend verification modal
       localStorage.setItem("pending_email", email);
 
-      // Go to success page (your existing route)
+      // Redirect to success page with email
       navigate("/registration-success", { state: { email } });
 
-      // Clear form
       setFullName("");
       setEmail("");
       setPassword("");
       setConfirm("");
+
     } catch (err) {
       const msg =
         err?.response?.data?.message ||
         "Registration failed. Please try again.";
+
       setError(msg);
     } finally {
       setLoading(false);
     }
   };
 
+  // ================================================================
+  // JSX
+  // ================================================================
   return (
     <>
       <Navbar />
@@ -107,7 +113,7 @@ export default function Register() {
           py: { xs: 3, md: 0 },
         }}
       >
-        {/* LEFT — BENEFITS / INSTRUCTIONS */}
+        {/* LEFT SECTION — BENEFITS */}
         <Box
           sx={{
             display: "flex",
@@ -124,20 +130,20 @@ export default function Register() {
           </Typography>
 
           <Typography sx={{ mb: 2, fontSize: 15, lineHeight: 1.8 }}>
-            ✔ Practice real WAEC / JAMB / NECO CBT exams{"\n"}
-            ✔ Access hundreds of quality past questions{"\n"}
-            ✔ Track your scores and improvements{"\n"}
-            ✔ Get used to real exam timing and pressure{"\n"}
-            ✔ Prepare anytime, anywhere
+            ✔ Practice real WAEC/JAMB/NECO CBT exams <br />
+            ✔ Access hundreds of quality past questions <br />
+            ✔ Track your scores and improvements <br />
+            ✔ Experience real CBT timing and pressure <br />
+            ✔ Learn anytime, anywhere
           </Typography>
 
           <Typography sx={{ mt: 3, fontSize: 15 }}>
-            After registering, please check your <b>email</b> (and <b>spam</b>)
-            for a verification link to activate your account.
+            After registering, check your <b>email</b> (and <b>spam</b>) for a
+            verification link.
           </Typography>
         </Box>
 
-        {/* RIGHT — REGISTRATION FORM CARD */}
+        {/* RIGHT SECTION — REGISTRATION FORM */}
         <Box
           sx={{
             px: { xs: 3, md: 6 },
@@ -161,12 +167,11 @@ export default function Register() {
               fontWeight={800}
               textAlign="center"
               mb={2}
-              sx={{ letterSpacing: -0.5 }}
             >
               Create Your Account
             </Typography>
 
-            {/* ERROR TOAST */}
+            {/* ERROR MESSAGE */}
             <Snackbar
               open={!!error}
               autoHideDuration={4500}
@@ -176,16 +181,14 @@ export default function Register() {
               <Alert
                 severity="error"
                 variant="filled"
-                sx={{ width: "100%" }}
                 onClose={() => setError("")}
+                sx={{ width: "100%" }}
               >
                 {error}
               </Alert>
             </Snackbar>
 
-            {/* GOOGLE LOGIN */}
- {/*   <GoogleAuthButton />    <Divider sx={{ my: 3 }}>or</Divider> */}
-
+            {/* FORM */}
             <form onSubmit={handleSubmit} noValidate>
               {/* FULL NAME */}
               <TextField
@@ -194,8 +197,6 @@ export default function Register() {
                 margin="normal"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                error={!!error && !fullName}
-                helperText={!!error && !fullName ? "Full name is required" : ""}
               />
 
               {/* EMAIL */}
@@ -206,18 +207,6 @@ export default function Register() {
                 margin="normal"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                error={
-                  !!error &&
-                  (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-                }
-                helperText={
-                  !!error &&
-                  (!email
-                    ? "Email is required"
-                    : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-                    ? "Enter a valid email address"
-                    : "")
-                }
               />
 
               {/* PASSWORD */}
@@ -228,22 +217,12 @@ export default function Register() {
                 margin="normal"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                error={!!error && (!password || password.length < 6)}
-                helperText={
-                  !!error &&
-                  (!password
-                    ? "Password is required"
-                    : password.length < 6
-                    ? "Minimum 6 characters"
-                    : "")
-                }
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
                       <IconButton
                         onClick={() => setShowPass((prev) => !prev)}
                         edge="end"
-                        aria-label="Toggle password visibility"
                       >
                         {showPass ? <VisibilityOff /> : <Visibility />}
                       </IconButton>
@@ -260,19 +239,12 @@ export default function Register() {
                 margin="normal"
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
-                error={!!error && password !== confirm}
-                helperText={
-                  !!error && password !== confirm
-                    ? "Passwords do not match"
-                    : ""
-                }
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
                       <IconButton
                         onClick={() => setShowConfirm((prev) => !prev)}
                         edge="end"
-                        aria-label="Toggle confirm password visibility"
                       >
                         {showConfirm ? <VisibilityOff /> : <Visibility />}
                       </IconButton>
@@ -292,7 +264,6 @@ export default function Register() {
                   py: 1.3,
                   fontSize: 16,
                   borderRadius: 2,
-                  textTransform: "none",
                 }}
               >
                 {loading ? "Creating Account..." : "Register"}

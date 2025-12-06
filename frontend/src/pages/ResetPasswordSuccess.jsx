@@ -1,6 +1,8 @@
-// =======================================================
-// ResetPasswordSuccess.jsx — Final Updated Version
-// =======================================================
+// ======================================================================
+// ResetPasswordSuccess.jsx — FINAL UPDATED VERSION
+// Works perfectly with ResetPassword.jsx final flow
+// ======================================================================
+
 import { Box, Typography, Paper, Button } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
@@ -32,10 +34,9 @@ export default function ResetPasswordSuccess() {
             maxWidth: 420,
             p: { xs: 3, md: 5 },
             borderRadius: 4,
-            textAlign: "center",
-            border: "1px solid",
-            borderColor: "divider",
+            border: "1px solid #e0e0e0",
             backgroundColor: "white",
+            textAlign: "center",
           }}
         >
           <Typography
@@ -43,22 +44,38 @@ export default function ResetPasswordSuccess() {
             fontWeight={800}
             sx={{ mb: 2, color: "primary.main" }}
           >
-            Password Reset Successful
+            Password Reset Successful 🎉
           </Typography>
 
-          <Typography sx={{ mb: 3, color: "text.secondary", lineHeight: 1.6 }}>
-            Your password has been updated successfully.
+          <Typography
+            sx={{
+              mb: 3,
+              color: "text.secondary",
+              fontSize: 16,
+              lineHeight: 1.6,
+            }}
+          >
+            Your password has been successfully updated.
             <br />
-            You can now log in with your new password.
+            You can now log in to your account using your new password.
           </Typography>
 
           <Button
             variant="contained"
             fullWidth
-            sx={{ py: 1.2, fontSize: 15 }}
+            sx={{ py: 1.2, mb: 2 }}
             onClick={() => navigate("/login")}
           >
             Go to Login
+          </Button>
+
+          <Button
+            variant="outlined"
+            fullWidth
+            sx={{ py: 1.2 }}
+            onClick={() => navigate("/")}
+          >
+            Return to Home
           </Button>
         </Paper>
       </Box>

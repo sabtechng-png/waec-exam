@@ -15,13 +15,15 @@ const { pool } = require("./db");
 const cleanupUnverifiedUsers = require("./cron/cleanupUnverified");
 const englishAdminRoutes = require("./routes/admin/englishAdminRoutes");
 
+// PASSWORD RESET (Load FIRST before /auth)
+const passwordResetRoutes = require("./routes/auth/passwordResetRoutes");
+
 const app = express();
 
 // ============================
-// ⚡ SERVER WARM-UP (DB + ROUTES)
+// ⚡ SERVER WARM-UP
 // ============================
 
-// Warm the DB connection immediately on startup (reduces first request delay)
 (async () => {
   try {
     await pool.query("SELECT 1");
@@ -31,12 +33,11 @@ const app = express();
   }
 })();
 
-// Run unverified cleanup on startup + every 24 hours
 cleanupUnverifiedUsers();
 setInterval(cleanupUnverifiedUsers, 24 * 60 * 60 * 1000);
 
 // ============================
-// 🌐 CORS CONFIG (SAFE + FAST)
+// 🌐 CORS CONFIG
 // ============================
 
 app.use(
@@ -55,13 +56,26 @@ app.use(
 );
 
 // ============================
-// 🛡 SECURITY + PERFORMANCE
+// SECURITY + PERFORMANCE
 // ============================
 
-app.use(helmet());           // Prevents common attacks
-app.use(compression());      // GZIP compression for speed
-app.use(express.json());     // JSON body parser
+app.use(helmet());
+app.use(compression());
+app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+// ============================
+// 🔐 PASSWORD ROUTES (LOAD FIRST)
+// ============================
+
+app.use("/password", passwordResetRoutes);
+
+// ============================
+// 🔐 AUTH ROUTES
+// ============================
+
+app.use("/auth", require("./routes/authRoutes"));
+app.use("/auth/google", require("./routes/authGoogleRoutes"));
 
 // ============================
 // 📌 ADMIN ROUTES
@@ -87,7 +101,6 @@ app.use("/api/student/sessions", require("./routes/studentSessionRoutes"));
 app.use("/student/results", require("./routes/studentResultsRoutes"));
 app.use("/dashboard", require("./routes/dashboardRoutes"));
 
-// Public homepage subjects
 app.use("/public", require("./routes/publicSubjectRoutes"));
 app.use("/public/exam", require("./routes/publicExamRoutes"));
 
@@ -106,14 +119,6 @@ app.use("/english-exam", require("./routes/exam/english/englishQuestionRoutes"))
 app.use("/english-exam", require("./routes/exam/english/englishAnswerRoutes"));
 app.use("/english-exam", require("./routes/exam/english/englishSubmitRoutes"));
 app.use("/english-exam", require("./routes/exam/english/englishLoadRoutes"));
-
-// ============================
-// 🔐 AUTH ROUTES
-// ============================
-
-app.use("/auth", require("./routes/authRoutes"));
-app.use("/auth", require("./routes/passwordResetRoutes"));
-app.use("/auth/google", require("./routes/authGoogleRoutes"));
 
 // ============================
 // 🚀 START SERVER

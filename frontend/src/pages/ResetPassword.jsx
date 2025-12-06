@@ -1,6 +1,7 @@
 // =======================================================
-// ResetPassword.jsx — Final Updated Version
+// ResetPassword.jsx — Updated with Confirm Password
 // =======================================================
+
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
@@ -21,7 +22,7 @@ import Navbar from "../components/Navbar";
 import { Footer } from "../components/Footer";
 
 import api from "../utils/api";
-import Loader from "../components/Loader";        // ✔ INLINE BUTTON LOADER
+import Loader from "../components/Loader";
 import Toast from "../components/Toast";
 
 export default function ResetPassword() {
@@ -29,15 +30,21 @@ export default function ResetPassword() {
   const navigate = useNavigate();
 
   const token = searchParams.get("token");
-  
+
   const [validated, setValidated] = useState(false);
   const [validationLoading, setValidationLoading] = useState(true);
 
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
   const [showPw, setShowPw] = useState(false);
+  const [showConfirmPw, setShowConfirmPw] = useState(false);
 
   const [loading, setLoading] = useState(false);
 
+  // ==============================
+  // VALIDATE RESET TOKEN
+  // ==============================
   useEffect(() => {
     if (!token) {
       setValidated(false);
@@ -48,7 +55,7 @@ export default function ResetPassword() {
 
     const validateToken = async () => {
       try {
-        await api.post("/auth/password/validate-token", { token });
+        await api.post("/password/validate-token", { token });
         setValidated(true);
       } catch (err) {
         setValidated(false);
@@ -61,18 +68,26 @@ export default function ResetPassword() {
     validateToken();
   }, [token]);
 
+  // ==============================
+  // SUBMIT NEW PASSWORD
+  // ==============================
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!password || password.length < 6) {
-      Toast.error("Password must be at least 6 characters");
+      Toast.error("Password must be at least 6 characters.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      Toast.error("Passwords do not match.");
       return;
     }
 
     setLoading(true);
 
     try {
-      await api.post("/auth/password/reset", { token, password });
+      await api.post("/password/reset", { token, password });
       Toast.success("Password reset successful!");
       navigate("/reset-success");
     } catch (err) {
@@ -145,7 +160,11 @@ export default function ResetPassword() {
           {/* ======================== */}
           {!validationLoading && !validated && (
             <>
-              <Typography variant="h5" fontWeight={800} sx={{ mb: 2, color: "error.main" }}>
+              <Typography
+                variant="h5"
+                fontWeight={800}
+                sx={{ mb: 2, color: "error.main" }}
+              >
                 Invalid or Expired Link
               </Typography>
 
@@ -165,7 +184,7 @@ export default function ResetPassword() {
           )}
 
           {/* ======================== */}
-          {/* VALID TOKEN SHOW FORM */}
+          {/* VALID TOKEN — SHOW FORM */}
           {/* ======================== */}
           {!validationLoading && validated && (
             <>
@@ -174,10 +193,11 @@ export default function ResetPassword() {
               </Typography>
 
               <Typography sx={{ mb: 3, color: "text.secondary" }}>
-                Enter a new password below.
+                Enter your new password below.
               </Typography>
 
               <form onSubmit={handleSubmit}>
+                {/* NEW PASSWORD */}
                 <TextField
                   label="New Password"
                   type={showPw ? "text" : "password"}
@@ -191,6 +211,29 @@ export default function ResetPassword() {
                       <InputAdornment position="end">
                         <IconButton onClick={() => setShowPw((s) => !s)} edge="end">
                           {showPw ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+
+                {/* CONFIRM PASSWORD */}
+                <TextField
+                  label="Confirm Password"
+                  type={showConfirmPw ? "text" : "password"}
+                  fullWidth
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  margin="normal"
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          onClick={() => setShowConfirmPw((s) => !s)}
+                          edge="end"
+                        >
+                          {showConfirmPw ? <VisibilityOff /> : <Visibility />}
                         </IconButton>
                       </InputAdornment>
                     ),

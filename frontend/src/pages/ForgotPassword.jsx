@@ -1,6 +1,7 @@
-// ======================================================
-// ForgotPassword.jsx — Final Updated Version
-// ======================================================
+// ======================================================================
+// ForgotPassword.jsx — FINAL UPDATED VERSION (Matches new backend logic)
+// ======================================================================
+
 import { useState } from "react";
 
 import {
@@ -24,43 +25,56 @@ export default function ForgotPassword() {
   const [snackbar, setSnackbar] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // -------------------------------------------------------
+  // VALIDATION
+  // -------------------------------------------------------
   const validate = () => {
-    if (!email) return "Email is required";
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-      return "Please enter a valid email address";
+    if (!email) return "Email is required.";
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!regex.test(email)) return "Enter a valid email.";
     return "";
   };
 
+  // -------------------------------------------------------
+  // SUBMIT HANDLER
+  // -------------------------------------------------------
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const v = validate();
-    if (v) {
-      setSnackbar(v);
+    const error = validate();
+    if (error) {
+      setSnackbar(error);
       return;
     }
 
-    setSnackbar("");
     setLoading(true);
+    setSnackbar("");
 
     try {
-      await api.post("/auth/password/request", { email });
+      // MUST MATCH backend mount: app.use("/auth/password", passwordResetRoutes)
+      await api.post("/password/request", { email });
 
       Toast.success(
-        "If an account exists, a reset link has been sent to your email."
+        "If your email exists, a password reset link has been sent."
       );
 
-      setEmail("");
+      setEmail(""); // Clear field
     } catch (err) {
+      console.error("FORGOT PASSWORD ERROR:", err);
+
       const msg =
         err?.response?.data?.message ||
-        "Failed to send reset link. Please try again.";
+        "Unable to send reset link. Please try again.";
+
       setSnackbar(msg);
     } finally {
       setLoading(false);
     }
   };
 
+  // -------------------------------------------------------
+  // UI
+  // -------------------------------------------------------
   return (
     <>
       <Navbar />
@@ -97,10 +111,11 @@ export default function ForgotPassword() {
             Forgot Password
           </Typography>
 
-          <Typography sx={{ mb: 3, color: "text.secondary" }}>
-            Enter your email address and we’ll send you a reset link.
+          <Typography sx={{ mb: 3, color: "text.secondary", lineHeight: 1.6 }}>
+            Enter your email address and we’ll send you a secure reset link.
           </Typography>
 
+          {/* ERROR SNACKBAR */}
           <Snackbar
             open={!!snackbar}
             autoHideDuration={3500}
@@ -108,9 +123,9 @@ export default function ForgotPassword() {
             anchorOrigin={{ vertical: "top", horizontal: "center" }}
           >
             <Alert
-              onClose={() => setSnackbar("")}
               severity="error"
               variant="filled"
+              onClose={() => setSnackbar("")}
               sx={{ width: "100%" }}
             >
               {snackbar}

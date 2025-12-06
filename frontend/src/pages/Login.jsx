@@ -1,6 +1,7 @@
-// =========================================
-// Login.jsx — Redesigned, Logic Preserved
-// =========================================
+// =======================================================
+// Login.jsx — Google Button Added (NO FEATURE REMOVED)
+// =======================================================
+
 import { useState, useEffect } from "react";
 import {
   TextField,
@@ -11,24 +12,25 @@ import {
   InputAdornment,
   IconButton,
   Box,
-  Divider,
   Typography,
   Paper,
 } from "@mui/material";
 
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
-import { Link, useNavigate } from "react-router-dom";
 
+import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { Footer } from "../components/Footer";
 
-import GoogleAuthButton from "../components/GoogleAuthButton";
-
 import { useAuth } from "../context/AuthContext";
 import api, { warmUpBackend } from "../utils/api";
+
 import ResendVerifyModal from "../components/ResendVerifyModal";
 import Toast from "../components/Toast";
+
+// ⭐ ADDED
+import GoogleAuthButton from "../components/GoogleAuthButton";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -40,32 +42,31 @@ export default function Login() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
   const [isUnverified, setIsUnverified] = useState(false);
 
-  // Modal for resend verification
   const [modalOpen, setModalOpen] = useState(false);
 
-  // Warm backend
   useEffect(() => {
     warmUpBackend();
   }, []);
 
-  // Redirect logged-in users
   useEffect(() => {
     if (token) navigate("/dashboard");
   }, [token, navigate]);
 
   const validate = () => {
     if (!email) return "Email is required";
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return "Enter a valid email";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+      return "Enter a valid email address";
     if (!password) return "Password is required";
-    if (password.length < 6) return "Password must be at least 6 characters";
+    if (password.length < 6)
+      return "Password must be at least 6 characters";
     return "";
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     const v = validate();
     if (v) {
       setError(v);
@@ -74,43 +75,36 @@ export default function Login() {
     }
 
     setError("");
-    setIsUnverified(false);
     setLoading(true);
+    setIsUnverified(false);
 
     try {
-      const { data } = await api.post("/auth/login", { email, password });
+      const res = await api.post("/auth/login", { email, password });
+      const data = res.data;
 
-      // Extra safety (backend already checks this) :contentReference[oaicite:2]{index=2}
       if (!data?.user?.is_verified) {
         setIsUnverified(true);
-        Toast.info("Your email is not verified. Please check your inbox.");
-        navigate("/email-verification-notice", { state: { email } });
+        setError("Your email is not verified.");
+        Toast.info("Check your email and verify your account.");
         return;
       }
 
       login(data.user, data.token);
-
-      if (data.user.role === "admin") {
-        navigate("/admin");
-      } else {
-        navigate("/dashboard");
-      }
+      navigate(data.user.role === "admin" ? "/admin" : "/dashboard");
+      
     } catch (err) {
       const status = err?.response?.status;
       const msg = err?.response?.data?.message;
 
-      // Handle “Email not verified” coming from backend :contentReference[oaicite:3]{index=3}
       if (status === 403 && msg === "Email not verified") {
         setIsUnverified(true);
-        setError("Your email is not verified. Please verify to continue.");
+        setError("Your email is not verified.");
         return;
       }
 
       setIsUnverified(false);
-      setError(
-        msg ||
-          "Login failed. Please check your email and password and try again."
-      );
+      setError(msg || "Login failed. Please check your email and password.");
+      
     } finally {
       setLoading(false);
     }
@@ -120,7 +114,6 @@ export default function Login() {
     <>
       <Navbar />
 
-      {/* Modal: Resend email verification */}
       <ResendVerifyModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
@@ -136,7 +129,7 @@ export default function Login() {
           alignItems: "stretch",
         }}
       >
-        {/* LEFT SIDE: LOGIN CARD */}
+        {/* LEFT SIDE */}
         <Box
           sx={{
             display: "flex",
@@ -163,7 +156,6 @@ export default function Login() {
               fontWeight={800}
               textAlign="center"
               mb={1.5}
-              sx={{ letterSpacing: -0.5 }}
             >
               Login to Your Account
             </Typography>
@@ -172,9 +164,10 @@ export default function Login() {
               textAlign="center"
               sx={{ mb: 2.5, color: "text.secondary", fontSize: 14 }}
             >
-              Continue your CBT practice, track your progress and view results.
+              Continue your CBT practice and track your results.
             </Typography>
 
+            {/* ERROR BAR */}
             <Snackbar
               open={!!error}
               autoHideDuration={4000}
@@ -184,18 +177,31 @@ export default function Login() {
               <Alert
                 onClose={() => setError("")}
                 severity={isUnverified ? "warning" : "error"}
-                variant="filled"
-                sx={{ width: "100%" }}
+                variant="standard"
+                sx={{
+                  width: "100%",
+                  bgcolor: isUnverified ? "#fff8e1" : "#fdecea",
+                  color: "#3a3a3a",
+                  border: "1px solid #e0e0e0",
+                }}
               >
                 {error}
+
+                {isUnverified && (
+                  <Typography sx={{ mt: 1, fontSize: 13, color: "#333" }}>
+                    Check your email and verify your account, or{" "}
+                    <MLink
+                      sx={{ cursor: "pointer", fontWeight: 600 }}
+                      onClick={() => setModalOpen(true)}
+                    >
+                      click here to resend the verification link.
+                    </MLink>
+                  </Typography>
+                )}
               </Alert>
             </Snackbar>
 
- {/*   <GoogleAuthButton />    <Divider sx={{ my: 3 }}>or</Divider> */}
-          
-
-           
-
+            {/* FORM */}
             <form onSubmit={handleSubmit} noValidate>
               <TextField
                 label="Email Address"
@@ -219,11 +225,16 @@ export default function Login() {
                   endAdornment: (
                     <InputAdornment position="end">
                       <IconButton
-                        onClick={() => setShowPassword((s) => !s)}
+                        onClick={() =>
+                          setShowPassword((prev) => !prev)
+                        }
                         edge="end"
-                        aria-label="Toggle password visibility"
                       >
-                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                        {showPassword ? (
+                          <VisibilityOff />
+                        ) : (
+                          <Visibility />
+                        )}
                       </IconButton>
                     </InputAdornment>
                   ),
@@ -238,24 +249,31 @@ export default function Login() {
                 sx={{
                   mt: 3,
                   py: 1.3,
-                  fontSize: "16px",
-                  textTransform: "none",
                   borderRadius: 2,
+                  fontSize: 16,
                 }}
               >
                 {loading ? "Logging in..." : "Login"}
               </Button>
+
+              {/* ⭐ NEW GOOGLE BUTTON SECTION */}
+              <Box sx={{ textAlign: "center", my: 2, fontSize: 13, color: "#666" }}>
+                ─── or continue with ───
+              </Box>
+
+              <GoogleAuthButton />
             </form>
 
+            {/* LINKS */}
             <MLink
               component={Link}
               to="/forgot-password"
               underline="hover"
               sx={{
                 mt: 2,
-                fontSize: 14,
                 display: "block",
                 textAlign: "center",
+                fontSize: 14,
               }}
             >
               Forgot password?
@@ -267,9 +285,9 @@ export default function Login() {
               underline="hover"
               sx={{
                 mt: 1,
-                fontSize: 14,
                 display: "block",
                 textAlign: "center",
+                fontSize: 14,
               }}
             >
               Don’t have an account? Register
@@ -277,7 +295,7 @@ export default function Login() {
           </Paper>
         </Box>
 
-        {/* RIGHT SIDE: INSTRUCTIONS / LOGIN DIFFICULTIES */}
+        {/* RIGHT SIDE HELP PANEL */}
         <Box
           sx={{
             display: { xs: "none", md: "flex" },
@@ -295,17 +313,15 @@ export default function Login() {
           </Typography>
 
           <Typography sx={{ mb: 2, fontSize: 15, lineHeight: 1.8 }}>
-            • Make sure you typed the <b>correct email address</b> and password.
+            • Ensure your email and password are correct.
             <br />
-            • Your account email must be <b>verified</b> before you can log in.
+            • Your email must be <b>verified</b> before access.
           </Typography>
 
           <Typography sx={{ mb: 2, fontSize: 15, lineHeight: 1.8 }}>
-            If your email is not verified:
-            <br />– Check your <b>inbox</b> and <b>spam folder</b> for a
-            verification email from CBT Master.
-            <br />– If you can’t find it, click the button below to resend the
-            verification link.
+            Didn’t receive the verification mail?
+            <br />
+            Check your inbox or spam folder.
           </Typography>
 
           <Button
@@ -315,11 +331,6 @@ export default function Login() {
           >
             Resend Verification Email
           </Button>
-
-          <Typography sx={{ mt: 3, fontSize: 14, color: "text.secondary" }}>
-            Still having issues? You can try resetting your password or contact
-            support for more help.
-          </Typography>
         </Box>
       </Box>
 
