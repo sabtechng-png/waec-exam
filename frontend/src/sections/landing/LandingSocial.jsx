@@ -27,6 +27,7 @@ import {
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import ResponsiveAdsterraBanner from "../../components/ads/ResponsiveAdsterraBanner";
 
 import AdBlockAtOptions from "../../components/ads/AdBlockAtOptions";
 
@@ -151,36 +152,15 @@ export default function LandingSocial() {
         ))}
       </Box>
 
-     {/* ⭐ SECOND AD (RESPONSIVE ATOPTIONS) */}
-<Box
-  sx={{
-    mt: 6,
-    width: "100%",
-    display: "flex",
-    justifyContent: "center",
-  }}
->
-  <Box
-    id="responsive-ad-bottom"
-    sx={{
-      width: "100%",
-      maxWidth: {
-        xs: 300,  // small phones
-        sm: 468,  // tablets
-        md: 728,  // large screens
-      },
-      mx: "auto",
-    }}
-  >
-    <AdBlockAtOptions
-      adKey="efd800066af5754002a75671dd92ec61"
-      id="ad-bottom-section"
-      width={728}
-      height={90}
-    />
-  </Box>
-</Box>
-
+      {/* ⭐ SECOND AD (ATOPTIONS FORMAT) */}
+      <Box sx={{ mt: 6 }}>
+        <AdBlockAtOptions
+          adKey="efd800066af5754002a75671dd92ec61"
+          id="ad-bottom-section"
+          width={728}
+          height={90}
+        />
+      </Box>
 
       {/* FINAL CTA */}
       <Box
@@ -223,6 +203,13 @@ export default function LandingSocial() {
           </Button>
         </Stack>
       </Box>
+	
+<Box sx={{ mt: 6 }}>
+  <ResponsiveAdsterraBanner />
+</Box>
+	  
+	
+	  
     </Container>
   );
 }
