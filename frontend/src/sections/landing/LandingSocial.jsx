@@ -151,15 +151,36 @@ export default function LandingSocial() {
         ))}
       </Box>
 
-      {/* ⭐ SECOND AD (ATOPTIONS FORMAT) */}
-      <Box sx={{ mt: 6 }}>
-        <AdBlockAtOptions
-          adKey="efd800066af5754002a75671dd92ec61"
-          id="ad-bottom-section"
-          width={728}
-          height={90}
-        />
-      </Box>
+     {/* ⭐ SECOND AD (RESPONSIVE ATOPTIONS) */}
+<Box
+  sx={{
+    mt: 6,
+    width: "100%",
+    display: "flex",
+    justifyContent: "center",
+  }}
+>
+  <Box
+    id="responsive-ad-bottom"
+    sx={{
+      width: "100%",
+      maxWidth: {
+        xs: 300,  // small phones
+        sm: 468,  // tablets
+        md: 728,  // large screens
+      },
+      mx: "auto",
+    }}
+  >
+    <AdBlockAtOptions
+      adKey="efd800066af5754002a75671dd92ec61"
+      id="ad-bottom-section"
+      width={728}
+      height={90}
+    />
+  </Box>
+</Box>
+
 
       {/* FINAL CTA */}
       <Box

@@ -263,13 +263,7 @@ export default function Login() {
                 {loading ? "Logging in..." : "Login"}
               </Button>
 
-              {/* DIVIDER */}
-              <Box sx={{ textAlign: "center", my: 2, color: "#666", fontSize: 13 }}>
-                ─── or continue with ───
-              </Box>
-
-              {/* FULL GOOGLE OAUTH BUTTON */}
-              <GoogleAuthButton />
+             
             </form>
 
             {/* LINKS */}
