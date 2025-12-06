@@ -1,69 +1,67 @@
-// ======================= ResetPasswordSuccess.jsx (FINAL) =======================
+// =======================================================
+// ResetPasswordSuccess.jsx — Final Updated Version
+// =======================================================
+import { Box, Typography, Paper, Button } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+
 import Navbar from "../components/Navbar";
 import { Footer } from "../components/Footer";
-import { FaCheckCircle } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
 
 export default function ResetPasswordSuccess() {
   const navigate = useNavigate();
-
-  const buttonStyle = {
-    width: "100%",
-    background: "#0d6efd",
-    color: "white",
-    border: "none",
-    padding: "12px 0",
-    fontSize: "16px",
-    fontWeight: 500,
-    borderRadius: "8px",
-    cursor: "pointer",
-    transition: "0.3s",
-    marginTop: "15px",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-  };
 
   return (
     <>
       <Navbar />
 
-      <div
-        style={{
-          minHeight: "70vh",
+      <Box
+        sx={{
+          minHeight: "75vh",
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          padding: 20,
-          background: "#f4f6fb",
+          px: 2,
+          py: 6,
+          backgroundColor: "#f4f6fb",
         }}
       >
-        <div
-          style={{
+        <Paper
+          elevation={0}
+          sx={{
             width: "100%",
-            maxWidth: 480,
-            padding: 30,
-            background: "white",
+            maxWidth: 420,
+            p: { xs: 3, md: 5 },
+            borderRadius: 4,
             textAlign: "center",
-            borderRadius: 12,
-            boxShadow: "0 4px 10px rgba(0,0,0,0.12)",
+            border: "1px solid",
+            borderColor: "divider",
+            backgroundColor: "white",
           }}
         >
-          <FaCheckCircle size={60} color="#28a745" className="mb-3" />
+          <Typography
+            variant="h4"
+            fontWeight={800}
+            sx={{ mb: 2, color: "primary.main" }}
+          >
+            Password Reset Successful
+          </Typography>
 
-          <h2>Password Reset Successful</h2>
+          <Typography sx={{ mb: 3, color: "text.secondary", lineHeight: 1.6 }}>
+            Your password has been updated successfully.
+            <br />
+            You can now log in with your new password.
+          </Typography>
 
-          <p className="mt-3">
-            Your password has been updated successfully. You can now log in with
-            your new password.
-          </p>
-
-          <button
-            style={buttonStyle}
+          <Button
+            variant="contained"
+            fullWidth
+            sx={{ py: 1.2, fontSize: 15 }}
             onClick={() => navigate("/login")}
           >
             Go to Login
-          </button>
-        </div>
-      </div>
+          </Button>
+        </Paper>
+      </Box>
 
       <Footer />
     </>

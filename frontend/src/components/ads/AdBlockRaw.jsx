@@ -1,24 +1,37 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export default function AdBlockRaw({ scriptSrc, containerId }) {
+  const ref = useRef(null);
+
   useEffect(() => {
-    const container = document.getElementById(containerId);
-    if (!container) return;
+    if (!ref.current) return;
 
-    container.innerHTML = "";
+    // Clear container
+    ref.current.innerHTML = "";
 
-    // Inject the script exactly as provider requires
+    // Remove old scripts
+    const old = document.querySelectorAll(`script[data-ad="${containerId}"]`);
+    old.forEach((s) => s.remove());
+
+    // Create new script
     const script = document.createElement("script");
-    script.async = true;
     script.src = scriptSrc;
+    script.async = true;
+    script.setAttribute("data-ad", containerId);
 
-    container.appendChild(script);
+    // Insert after DOM settles
+    const timeout = setTimeout(() => {
+      document.body.appendChild(script);
+    }, 30);
+
+    return () => clearTimeout(timeout);
   }, [scriptSrc, containerId]);
 
   return (
     <div
       id={containerId}
-      style={{ width: "100%", textAlign: "center", margin: "20px 0" }}
-    ></div>
+      ref={ref}
+      style={{ width: "100%", minHeight: "50px" }}
+    />
   );
 }

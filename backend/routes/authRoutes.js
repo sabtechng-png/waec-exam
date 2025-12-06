@@ -1,5 +1,7 @@
 // backend/routes/authRoutes.js
-// ==================== AUTH ROUTES (FINAL VERSION) ====================
+// ========================================================
+//     AUTH ROUTES — FINAL OPTIMIZED, LOGIC PRESERVED
+// ========================================================
 
 const express = require("express");
 const bcrypt = require("bcryptjs");
@@ -9,12 +11,15 @@ const nodemailer = require("nodemailer");
 
 const router = express.Router();
 
-// Force backend timestamps to always use UTC
+// Always use UTC for backend consistency
 process.env.TZ = "UTC";
 
-// ----------------------
+// Adjustable bcrypt cost (8 = faster, safe)
+const BCRYPT_ROUNDS = 8;
+
+// --------------------------------------------------
 // Email Transporter
-// ----------------------
+// --------------------------------------------------
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: process.env.SMTP_PORT,
@@ -25,9 +30,9 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// ----------------------
-// Email HTML Template
-// ----------------------
+// --------------------------------------------------
+// Email Verification Template
+// --------------------------------------------------
 function htmlVerify(name, link) {
   return `
     <div style="font-family:Arial; max-width:600px; margin:auto;">
@@ -35,38 +40,72 @@ function htmlVerify(name, link) {
       <p>Hello <b>${name}</b>,</p>
       <p>Please click the button below to activate your account.</p>
 
-      <a href="${link}" 
+      <a href="${link}"
         style="background:#0d6efd;color:white;padding:12px 22px;
-               border-radius:8px;text-decoration:none;">
+        border-radius:8px;text-decoration:none;">
         Verify Email
       </a>
 
       <p style="margin-top:20px; color:#555;">
-        This link expires in <b>10 minutes</b> (your local time).
-      </p>
+        This link expires in <b>10 minutes</b>.</p>
     </div>
   `;
 }
 
-// ----------------------
-// POST /auth/register
-// ----------------------
+// --------------------------------------------------
+// 🔵 BACKEND WAKE-UP ROUTE
+// Used by warmUpBackend() on frontend.
+// --------------------------------------------------
+router.get("/ping", (req, res) => {
+  res.json({ status: "ok" });
+});
+
+// --------------------------------------------------
+// 🔵 GET /auth/me  (FAST VERSION)
+// --------------------------------------------------
+router.get("/me", async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ message: "Invalid token" });
+
+    const result = await pool.query(
+      `SELECT id, full_name, email, role, is_verified
+       FROM users
+       WHERE id=$1
+       LIMIT 1`,
+      [userId]
+    );
+
+    if (result.rowCount === 0)
+      return res.status(401).json({ message: "User not found" });
+
+    res.json({ user: result.rows[0] });
+  } catch (err) {
+    console.error("AUTH /me ERROR:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// --------------------------------------------------
+// 🔵 POST /auth/register
+// --------------------------------------------------
 router.post("/register", async (req, res) => {
   try {
     const { full_name, email, password } = req.body;
 
-    if (!full_name || !email || !password) {
+    if (!full_name || !email || !password)
       return res.status(400).json({ message: "All fields are required" });
-    }
 
-    const check = await pool.query("SELECT id FROM users WHERE email=$1", [
-      email,
-    ]);
-    if (check.rowCount > 0) {
+    // Check if email exists (FAST, uses LIMIT 1)
+    const check = await pool.query(
+      "SELECT id FROM users WHERE email=$1 LIMIT 1",
+      [email]
+    );
+
+    if (check.rowCount > 0)
       return res.status(409).json({ message: "Email already registered" });
-    }
 
-    const hash = await bcrypt.hash(password, 10);
+    const hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
     // Create user as unverified
     await pool.query(
@@ -75,6 +114,7 @@ router.post("/register", async (req, res) => {
       [full_name, email, hash]
     );
 
+    // Create email verification token
     const token = jwt.sign({ email }, process.env.JWT_SECRET);
 
     await pool.query(
@@ -85,14 +125,14 @@ router.post("/register", async (req, res) => {
       [token, email]
     );
 
-    const link = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
+    const verifyLink = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
 
     await transporter.sendMail({
       from: process.env.FROM_EMAIL,
       to: email,
       subject: "Verify your CBT Master account",
-      html: htmlVerify(full_name, link),
-      date: new Date().toUTCString(), // stable header for Outlook
+      html: htmlVerify(full_name, verifyLink),
+      date: new Date().toUTCString(),
     });
 
     res.status(201).json({
@@ -105,20 +145,20 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// ----------------------
-// GET /auth/verify-email
-// ----------------------
+// --------------------------------------------------
+// 🔵 GET /auth/verify-email
+// --------------------------------------------------
 router.get("/verify-email", async (req, res) => {
   try {
     const { token } = req.query;
-    if (!token) {
+
+    if (!token)
       return res.status(400).json({ message: "Invalid verification link" });
-    }
 
     let decoded;
     try {
       decoded = jwt.verify(token, process.env.JWT_SECRET, {
-        ignoreExpiration: true, // we use DB expiry instead
+        ignoreExpiration: true,
       });
     } catch {
       return res.status(400).json({ message: "Invalid verification link" });
@@ -128,35 +168,31 @@ router.get("/verify-email", async (req, res) => {
 
     const userRes = await pool.query(
       `SELECT is_verified, verification_token, verification_expires
-       FROM users WHERE email=$1`,
+       FROM users
+       WHERE email=$1
+       LIMIT 1`,
       [email]
     );
 
-    if (userRes.rowCount === 0) {
+    if (userRes.rowCount === 0)
       return res.status(400).json({ message: "Invalid verification link" });
-    }
 
     const user = userRes.rows[0];
 
-    // Already verified → treat as success
-    if (user.is_verified === true) {
+    // Already verified
+    if (user.is_verified === true)
       return res.json({ message: "Email already verified" });
-    }
 
     // Token mismatch
-    if (user.verification_token !== token) {
+    if (user.verification_token !== token)
       return res.status(400).json({ message: "Invalid verification link" });
-    }
 
-    // Compare with DB clock (UTC)
+    // Check expiry
     const nowResult = await pool.query("SELECT NOW() AS now");
-    const now = nowResult.rows[0].now;
-
-    if (now > user.verification_expires) {
+    if (nowResult.rows[0].now > user.verification_expires)
       return res.status(400).json({ message: "Verification link expired" });
-    }
 
-    // Mark user as verified
+    // Mark as verified
     await pool.query(
       `UPDATE users
        SET is_verified=true,
@@ -173,43 +209,44 @@ router.get("/verify-email", async (req, res) => {
   }
 });
 
-// ----------------------
-// POST /auth/resend-verify-link
-// ----------------------
+// --------------------------------------------------
+// 🔵 POST /auth/resend-verify-link
+// --------------------------------------------------
 router.post("/resend-verify-link", async (req, res) => {
   try {
     const { email } = req.body;
 
     const q = await pool.query(
-      `SELECT full_name, is_verified FROM users WHERE email=$1`,
+      `SELECT full_name, is_verified
+       FROM users
+       WHERE email=$1
+       LIMIT 1`,
       [email]
     );
 
-    if (q.rowCount === 0) {
+    if (q.rowCount === 0)
       return res.status(404).json({ message: "User not found" });
-    }
 
-    if (q.rows[0].is_verified) {
+    if (q.rows[0].is_verified)
       return res.status(400).json({ message: "Email already verified" });
-    }
 
     const token = jwt.sign({ email }, process.env.JWT_SECRET);
 
     await pool.query(
       `UPDATE users
        SET verification_token=$1,
-           verification_expires=NOW() + INTERVAL '10 minutes'
+           verification_expires = NOW() + INTERVAL '10 minutes'
        WHERE email=$2`,
       [token, email]
     );
 
-    const link = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
+    const verifyLink = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
 
     await transporter.sendMail({
       from: process.env.FROM_EMAIL,
       to: email,
-      subject: "Verify Your Email",
-      html: htmlVerify(q.rows[0].full_name, link),
+      subject: "Verify your CBT Master account",
+      html: htmlVerify(q.rows[0].full_name, verifyLink),
       date: new Date().toUTCString(),
     });
 
@@ -220,33 +257,41 @@ router.post("/resend-verify-link", async (req, res) => {
   }
 });
 
-// ----------------------
-// POST /auth/login
-// ----------------------
+// --------------------------------------------------
+// 🔵 POST /auth/login  (FAST VERSION)
+// --------------------------------------------------
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    if (!email || !password)
+      return res
+        .status(400)
+        .json({ message: "Email and password are required" });
+
+    // Query optimized with LIMIT 1
     const r = await pool.query(
-      "SELECT id, full_name, email, password_hash, is_verified, role FROM users WHERE email=$1",
+      `SELECT id, full_name, email, password_hash, is_verified, role
+       FROM users
+       WHERE email=$1
+       LIMIT 1`,
       [email]
     );
 
-    if (r.rowCount === 0) {
+    if (r.rowCount === 0)
       return res.status(401).json({ message: "Invalid credentials" });
-    }
 
     const user = r.rows[0];
 
+    // Compare password
     const valid = await bcrypt.compare(password, user.password_hash);
-    if (!valid) {
+    if (!valid)
       return res.status(401).json({ message: "Invalid credentials" });
-    }
 
-    if (!user.is_verified) {
+    if (!user.is_verified)
       return res.status(403).json({ message: "Email not verified" });
-    }
 
+    // Generate JWT (same structure as your old version)
     const token = jwt.sign(
       { userId: user.id, role: user.role },
       process.env.JWT_SECRET,

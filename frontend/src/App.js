@@ -1,16 +1,20 @@
 // ===============================
-// File: src/App.js (Updated with Global AdBlock Guard + Modal + Premium Support)
+// App.js — Fully Updated Version
 // ===============================
 
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "./context/AuthContext";
+import { AuthProvider } from "./context/AuthContext";
+import { LoadingProvider, useGlobalLoading } from "./context/LoadingContext";
+
+import { ToastContainer } from "react-toastify";
+
+// Global Loader
+import FullPageLoader from "./components/FullPageLoader";
+
+import ProtectedRoute from "./components/ProtectedRoute";
 
 // ---------- Analytics ----------
 import AnalyticsTracker from "./components/AnalyticsTracker";
-
-// ---------- AdBlock System ----------
-import PublicExamPage from "./pages/PublicExamPage";
-
 
 // ---------- Public Pages ----------
 import LandingPage from "./pages/LandingPage";
@@ -21,6 +25,8 @@ import JAMBPage from "./pages/JAMBPage";
 import NECOPage from "./pages/NECOPage";
 import PracticePage from "./components/PracticePage/PracticePage";
 import CookieConsent from "./components/CookieConsent";
+import PublicSubjects from "./pages/PublicSubjects";
+import PublicExamPage from "./pages/PublicExamPage";
 
 // ---------- Auth ----------
 import Login from "./pages/Login";
@@ -30,16 +36,15 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import ResetPasswordSuccess from "./pages/ResetPasswordSuccess";
 import PublicOnlyRoute from "./components/PublicOnlyRoute";
+import EmailVerificationNotice from "./pages/EmailVerificationNotice";
+import RegistrationSuccess from "./pages/RegistrationSuccess";
 
-// ---------- Misc Pages ----------
+// ---------- Misc ----------
 import AboutPage from "./pages/AboutPage";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import ContactPage from "./pages/ContactPage";
 import FAQPage from "./pages/FAQPage";
 import TermsPage from "./pages/TermsPage";
-import EmailVerificationNotice from "./pages/EmailVerificationNotice";
-import RegistrationSuccess from "./pages/RegistrationSuccess";
-import PublicSubjects from "./pages/PublicSubjects";
 
 // ---------- Dashboard ----------
 import DashboardLayout from "./layout/DashboardLayout";
@@ -47,7 +52,7 @@ import DashboardPage from "./pages/dashboard/DashboardPage";
 import StudentResultsPage from "./pages/dashboard/StudentResultsPage";
 import StudentResultDetailsPage from "./pages/dashboard/StudentResultDetailsPage";
 import StudentSubjectsPage from "./pages/student/StudentSubjectsPage";
-import SubjectPage from "./pages/student/ManageSubjectsPage.jsx";
+import SubjectPage from "./pages/student/ManageSubjectsPage";
 import LeaderboardPage from "./pages/dashboard/LeaderboardPage";
 import SettingsPage from "./pages/dashboard/SettingsPage";
 
@@ -60,17 +65,14 @@ import ManageSubjectsPage from "./pages/admin/ManageSubjectsPage";
 import AdminManageUsers from "./pages/admin/AdminManageUsers";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminQuestionsPage from "./pages/admin/AdminQuestionsPage";
-import ObjectiveQuestionsList from "./pages/admin/english/ObjectiveQuestionsList";
 
-// ADMIN PAGES - ENGLISH
 import EnglishManagerPage from "./pages/admin/english/EnglishManagerPage";
 import PassageList from "./pages/admin/english/PassageList";
 import PassageForm from "./pages/admin/english/PassageForm";
 import PassageQuestionsForm from "./pages/admin/english/PassageQuestionsForm";
 import ObjectiveQuestionsForm from "./pages/admin/english/ObjectiveQuestionsForm";
+import ObjectiveQuestionsList from "./pages/admin/english/ObjectiveQuestionsList";
 import SectionConfigPage from "./pages/admin/english/SectionConfigPage";
-
-
 
 // ---------- Exam ----------
 import ExamPage from "./pages/exam/ExamPage";
@@ -78,25 +80,22 @@ import EnglishExamPage from "./pages/exam/EnglishExamPage";
 import AttemptHistory from "./pages/exam/AttemptHistory";
 import ReviewPage from "./pages/exam/ReviewPage";
 
-
-
-// ---------- Protected Route ----------
-import ProtectedRoute from "./components/ProtectedRoute";
-
-// =====================================================
-// WRAPPER: Global AdBlock Guard + Premium Exclusion
-// =====================================================
+// ===============================
+// GLOBAL WRAPPER
+// ===============================
 function AppWrapper() {
- // const { user } = useAuth();
-//const isPremium = !!user?.isPremium;  // If premium → no ads & no AdBlock warnings
-
-//const { showModal, setShowModal } = useAdBlockGuard({ isPremium });
+  const { globalLoading } = useGlobalLoading();
 
   return (
     <>
+      {/* GLOBAL SPINNER */}
+      <FullPageLoader show={globalLoading} />
+
+      {/* GLOBAL TOASTER */}
+      <ToastContainer />
 
       <Routes>
-        {/* ADMIN ROUTES */}
+        {/* ---------------- ADMIN ROUTES ---------------- */}
         <Route
           path="/admin"
           element={
@@ -111,54 +110,38 @@ function AppWrapper() {
           <Route path="questions" element={<UploadQuestionsPage />} />
           <Route path="analytics" element={<AdminAnalytics />} />
           <Route path="manage-questions" element={<AdminQuestionsPage />} />
-	 
-      {/* ADMIN MAIN ENGLISH MANAGER */}
-      <Route path="english" element={<EnglishManagerPage />} />
 
-      {/* PASSAGES */}
-      <Route path="english/passages" element={<PassageList />} />
-      <Route path="english/passages/new" element={<PassageForm />} />
-      <Route path="english/passages/:id" element={<PassageForm />} />
+          {/* English Manager */}
+          <Route path="english" element={<EnglishManagerPage />} />
+          <Route path="english/passages" element={<PassageList />} />
+          <Route path="english/passages/new" element={<PassageForm />} />
+          <Route path="english/passages/:id" element={<PassageForm />} />
 
-      {/* PASSAGE QUESTIONS */}
-      <Route
-        path="english/passages/questions/:passageId"
-        element={<PassageQuestionsForm />}
-      />
+          <Route
+            path="english/passages/questions/:passageId"
+            element={<PassageQuestionsForm />}
+          />
 
+          <Route path="english/objectives" element={<ObjectiveQuestionsForm />} />
+          <Route
+            path="english/objectives/list"
+            element={<ObjectiveQuestionsList />}
+          />
+          <Route path="english/config" element={<SectionConfigPage />} />
+        </Route>
 
-
-      {/* OBJECTIVE QUESTIONS */}
-      <Route
-        path="english/objectives"
-        element={<ObjectiveQuestionsForm />}
-      />
-
- <Route
-    path="english/objectives/list"
-    element={<ObjectiveQuestionsList />}
-  />
-      {/* SECTION CONFIG */}
-      <Route path="english/config" element={<SectionConfigPage />} />
-			  
-	
-  </Route>
-
-        {/* PUBLIC ROUTES (ad-protected pages included) */}
+        {/* ---------------- PUBLIC ROUTES ---------------- */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/blog" element={<BlogPage />} />
         <Route path="/blog/:articleId" element={<BlogArticlePage />} />
         <Route path="/waec" element={<WAECPage />} />
         <Route path="/jamb" element={<JAMBPage />} />
         <Route path="/neco" element={<NECOPage />} />
-		<Route path="/practice" element={<PublicExamPage />} />
-      <Route path="/public-exam" element={<PublicExamPage />} />
 
+        {/* Public Page for Ads */}
+        <Route path="/public-exam" element={<PublicExamPage />} />
 
-        {/* HARD BLOCK PAGE */}
-      
-
-        {/* AUTH ROUTES (never blocked) */}
+        {/* AUTH ROUTES */}
         <Route
           path="/login"
           element={
@@ -175,12 +158,16 @@ function AppWrapper() {
             </PublicOnlyRoute>
           }
         />
+
         <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/email-verification-notice" element={<EmailVerificationNotice />} />
+        <Route path="/registration-success" element={<RegistrationSuccess />} />
+
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/reset-success" element={<ResetPasswordSuccess />} />
 
-        {/* EXAM ROUTES */}
+        {/* ---------------- EXAM ROUTES ---------------- */}
         <Route
           path="/exam/:subjectId"
           element={
@@ -189,10 +176,8 @@ function AppWrapper() {
             </ProtectedRoute>
           }
         />
-		
-		
-		<Route path="/english-exam/:examId" element={<EnglishExamPage />} />
 
+        <Route path="/english-exam/:examId" element={<EnglishExamPage />} />
 
         <Route
           path="/exam/history/:subjectId"
@@ -202,6 +187,7 @@ function AppWrapper() {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/exam/review/:sessionId"
           element={
@@ -211,7 +197,7 @@ function AppWrapper() {
           }
         />
 
-        {/* STUDENT DASHBOARD */}
+        {/* ---------------- STUDENT DASHBOARD ---------------- */}
         <Route
           path="/dashboard"
           element={
@@ -229,26 +215,18 @@ function AppWrapper() {
           <Route path="settings" element={<SettingsPage />} />
         </Route>
 
-        {/* EXTRA PUBLIC PAGES */}
+        {/* ---------------- EXTRA PUBLIC PAGES ---------------- */}
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/faq" element={<FAQPage />} />
         <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
-        <Route path="/email-verification-notice" element={<EmailVerificationNotice />} />
-        <Route path="/registration-success" element={<RegistrationSuccess />} />
         <Route path="/subjects" element={<PublicSubjects />} />
 
-
-	 
-
-        
-
-        {/* FALLBACK */}
+        {/* 404 fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
-      {/* COOKIE CONSENT */}
       <CookieConsent />
     </>
   );
@@ -259,11 +237,14 @@ function AppWrapper() {
 // ===============================
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <AnalyticsTracker />
-        <AppWrapper />
-      </BrowserRouter>
-    </AuthProvider>
+    <LoadingProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <AnalyticsTracker />
+          <AppWrapper />
+        </BrowserRouter>
+      </AuthProvider>
+    </LoadingProvider>
   );
 }
+

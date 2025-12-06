@@ -1,5 +1,5 @@
 // ============================
-// 🌍 SIMPLE SERVER SETUP
+// 🌍 HIGH-PERFORMANCE SERVER SETUP
 // ============================
 
 process.env.TZ = "UTC";
@@ -7,26 +7,36 @@ require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
+const compression = require("compression");
+const helmet = require("helmet");
 const path = require("path");
-const app = express();
+const { pool } = require("./db");
 
-// ============================
-// 🛠 AUTO DELETE UNVERIFIED USERS
-// ============================
 const cleanupUnverifiedUsers = require("./cron/cleanupUnverified");
 const englishAdminRoutes = require("./routes/admin/englishAdminRoutes");
 
-
-
-
-// run once daily
-setInterval(cleanupUnverifiedUsers, 24 * 60 * 60 * 1000);
-
-// run on startup
-cleanupUnverifiedUsers();
+const app = express();
 
 // ============================
-// 🌐 CORS (VERY SIMPLE + CORRECT)
+// ⚡ SERVER WARM-UP (DB + ROUTES)
+// ============================
+
+// Warm the DB connection immediately on startup (reduces first request delay)
+(async () => {
+  try {
+    await pool.query("SELECT 1");
+    console.log("🟢 Database connection warmed up");
+  } catch (err) {
+    console.error("🔴 DB warm-up failed:", err);
+  }
+})();
+
+// Run unverified cleanup on startup + every 24 hours
+cleanupUnverifiedUsers();
+setInterval(cleanupUnverifiedUsers, 24 * 60 * 60 * 1000);
+
+// ============================
+// 🌐 CORS CONFIG (SAFE + FAST)
 // ============================
 
 app.use(
@@ -45,14 +55,18 @@ app.use(
 );
 
 // ============================
-// 📦 MIDDLEWARE
+// 🛡 SECURITY + PERFORMANCE
 // ============================
-app.use(express.json());
+
+app.use(helmet());           // Prevents common attacks
+app.use(compression());      // GZIP compression for speed
+app.use(express.json());     // JSON body parser
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // ============================
 // 📌 ADMIN ROUTES
 // ============================
+
 app.use("/admin/dashboard", require("./routes/adminDashboardRoutes"));
 app.use("/admin/analytics", require("./routes/adminAnalyticsRoutes"));
 app.use("/admin/users", require("./routes/adminUsersRoutes"));
@@ -62,12 +76,12 @@ app.use("/admin/uploads", require("./routes/adminUploadsRoutes"));
 app.use("/admin/questions", require("./routes/questionsManageRoutes"));
 app.use("/admin/questions", require("./routes/questionsUploadRoutes"));
 app.use("/admin/questions", require("./routes/questionsBulkOpsRoutes"));
-
 app.use("/admin/english", englishAdminRoutes);
 
 // ============================
 // 🎓 STUDENT ROUTES
 // ============================
+
 app.use("/api/student/subjects", require("./routes/studentSubjectsRoutes"));
 app.use("/api/student/sessions", require("./routes/studentSessionRoutes"));
 app.use("/student/results", require("./routes/studentResultsRoutes"));
@@ -77,35 +91,36 @@ app.use("/dashboard", require("./routes/dashboardRoutes"));
 app.use("/public", require("./routes/publicSubjectRoutes"));
 app.use("/public/exam", require("./routes/publicExamRoutes"));
 
-
 // ============================
 // 🧪 EXAM ROUTES
 // ============================
-app.use("/exam", require("./routes/exam/examRoutes"));
 
+app.use("/exam", require("./routes/exam/examRoutes"));
 
 // ============================
 // 📝 ENGLISH EXAM ROUTES
 // ============================
+
 app.use("/english-exam", require("./routes/exam/english/englishStartRoutes"));
 app.use("/english-exam", require("./routes/exam/english/englishQuestionRoutes"));
 app.use("/english-exam", require("./routes/exam/english/englishAnswerRoutes"));
 app.use("/english-exam", require("./routes/exam/english/englishSubmitRoutes"));
 app.use("/english-exam", require("./routes/exam/english/englishLoadRoutes"));
 
-
 // ============================
 // 🔐 AUTH ROUTES
 // ============================
+
 app.use("/auth", require("./routes/authRoutes"));
 app.use("/auth", require("./routes/passwordResetRoutes"));
 app.use("/auth/google", require("./routes/authGoogleRoutes"));
 
-
 // ============================
 // 🚀 START SERVER
 // ============================
+
 const PORT = process.env.PORT || 4000;
+
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT} (UTC timezone enforced)`);
 });

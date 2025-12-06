@@ -1,7 +1,6 @@
-// ===============================================
-// Improved Login.jsx (UI Upgrade — Logic Preserved)
-// Source: :contentReference[oaicite:1]{index=1}
-// ===============================================
+// =========================================
+// Login.jsx — Updated with Email Verification Guard
+// =========================================
 import { useState, useEffect } from "react";
 import {
   TextField,
@@ -17,7 +16,6 @@ import {
   Paper,
 } from "@mui/material";
 
-
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import { Link, useNavigate } from "react-router-dom";
@@ -28,7 +26,9 @@ import { Footer } from "../components/Footer";
 import GoogleAuthButton from "../components/GoogleAuthButton";
 
 import { useAuth } from "../context/AuthContext";
-import api from "../utils/api";
+import api, { warmUpBackend } from "../utils/api";
+import ResendVerifyModal from "../components/ResendVerifyModal";
+import Toast from "../components/Toast";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -40,6 +40,14 @@ export default function Login() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Modal for resend verification
+  const [modalOpen, setModalOpen] = useState(false);
+
+  // 🚀 Warm backend
+  useEffect(() => {
+    warmUpBackend();
+  }, []);
 
   // Redirect logged-in users
   useEffect(() => {
@@ -65,10 +73,19 @@ export default function Login() {
     try {
       const { data } = await api.post("/auth/login", { email, password });
 
-      // Original logic preserved
+      // 🔥 EMAIL VERIFICATION GUARD
+      if (!data?.user?.is_verified) {
+        setLoading(false);
+        Toast.info("Your email is not verified. Please verify.");
+        // redirect to notice page
+        navigate("/email-verification-notice", { state: { email } });
+        return;
+      }
+
+      // Normal login
       login(data.user, data.token);
 
-      if (data?.user?.role === "admin") {
+      if (data.user.role === "admin") {
         navigate("/admin");
       } else {
         navigate("/dashboard");
@@ -87,7 +104,9 @@ export default function Login() {
     <>
       <Navbar />
 
-      {/* ========================= Main Section ========================= */}
+      {/* Modal: Resend email verification */}
+      <ResendVerifyModal open={modalOpen} onClose={() => setModalOpen(false)} />
+
       <Box
         sx={{
           minHeight: "85vh",
@@ -121,7 +140,6 @@ export default function Login() {
             Login to Your Account
           </Typography>
 
-          {/* Error Snackbar */}
           <Snackbar
             open={!!error}
             autoHideDuration={4000}
@@ -138,14 +156,11 @@ export default function Login() {
             </Alert>
           </Snackbar>
 
-          {/* Google Sign In */}
           <GoogleAuthButton />
 
           <Divider sx={{ my: 3 }}>or</Divider>
 
-          {/* ======================== FORM START ======================== */}
           <form onSubmit={handleSubmit} noValidate>
-            {/* EMAIL */}
             <TextField
               label="Email Address"
               type="email"
@@ -154,21 +169,8 @@ export default function Login() {
               fullWidth
               required
               margin="normal"
-              error={
-                !!error &&
-                (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-              }
-              helperText={
-                !!error &&
-                (!email
-                  ? "Email is required"
-                  : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-                  ? "Enter a valid email"
-                  : "")
-              }
             />
 
-            {/* PASSWORD */}
             <TextField
               label="Password"
               type={showPassword ? "text" : "password"}
@@ -177,15 +179,6 @@ export default function Login() {
               fullWidth
               required
               margin="normal"
-              error={!!error && (!password || password.length < 6)}
-              helperText={
-                !!error &&
-                (!password
-                  ? "Password is required"
-                  : password.length < 6
-                  ? "Minimum 6 characters"
-                  : "")
-              }
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
@@ -201,7 +194,6 @@ export default function Login() {
               }}
             />
 
-            {/* LOGIN BUTTON */}
             <Button
               type="submit"
               variant="contained"
@@ -219,7 +211,6 @@ export default function Login() {
             </Button>
           </form>
 
-          {/* EXTRA LINKS */}
           <MLink
             component={Link}
             to="/forgot-password"
@@ -227,6 +218,21 @@ export default function Login() {
             sx={{ mt: 2, fontSize: 14, display: "block", textAlign: "center" }}
           >
             Forgot password?
+          </MLink>
+
+          <MLink
+            component="button"
+            underline="hover"
+            sx={{
+              mt: 1,
+              fontSize: 14,
+              display: "block",
+              textAlign: "center",
+              color: "primary.main",
+            }}
+            onClick={() => setModalOpen(true)}
+          >
+            Resend verification email
           </MLink>
 
           <MLink

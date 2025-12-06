@@ -1,79 +1,106 @@
-// ======================================================
-// EmailVerificationNotice.jsx (Improved UI — Logic Preserved)
-// Source: :contentReference[oaicite:3]{index=3}
-// ======================================================
+// ===============================================
+// EmailVerificationNotice.jsx — Final Updated
+// ===============================================
+import { useLocation, useNavigate } from "react-router-dom";
+import { useState } from "react";
 
-import { Box, Typography, Button, Paper } from "@mui/material";
-import MarkEmailReadIcon from "@mui/icons-material/MarkEmailRead";
-import { Link, useLocation } from "react-router-dom";
+import { Box, Typography, Paper, Button } from "@mui/material";
 
 import Navbar from "../components/Navbar";
 import { Footer } from "../components/Footer";
 
+import ResendVerifyModal from "../components/ResendVerifyModal";
+import Toast from "../components/Toast";
+
 export default function EmailVerificationNotice() {
   const location = useLocation();
-  const email = location.state?.email;
+  const navigate = useNavigate();
+
+  // Email passed from Login.jsx or Register.jsx
+  const email = location?.state?.email || "";
+
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const handleOpenModal = () => {
+    if (!email) {
+      Toast.error("Email not available. Please enter it manually in the modal.");
+      setModalOpen(true);
+      return;
+    }
+    setModalOpen(true);
+  };
 
   return (
     <>
       <Navbar />
 
+      {/* Resend Verification Modal */}
+      <ResendVerifyModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        defaultEmail={email}
+      />
+
       <Box
         sx={{
-          minHeight: "80vh",
-          background: "#f4f6fb",
+          minHeight: "75vh",
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
           px: 2,
-          py: 5,
+          backgroundColor: "#f4f6fb",
         }}
       >
         <Paper
           elevation={0}
           sx={{
             width: "100%",
-            maxWidth: 450,
-            p: { xs: 3, md: 4 },
+            maxWidth: 460,
+            p: { xs: 3, md: 5 },
             borderRadius: 4,
             textAlign: "center",
             border: "1px solid",
             borderColor: "divider",
-            background: "white",
+            backgroundColor: "white",
           }}
         >
-          <MarkEmailReadIcon sx={{ fontSize: 70, color: "#0d6efd", mb: 2 }} />
-
-          <Typography variant="h5" fontWeight={800} mb={1}>
+          <Typography
+            variant="h4"
+            fontWeight={800}
+            sx={{ mb: 2, color: "primary.main" }}
+          >
             Verify Your Email
           </Typography>
 
-          <Typography variant="body1" sx={{ mb: 3, lineHeight: 1.7 }}>
-            A 6-digit verification code has been sent to:
+          <Typography sx={{ mb: 3, lineHeight: 1.6, color: "text.secondary" }}>
+            We have sent a verification link to:
             <br />
-            <strong>{email}</strong>
+            <strong>{email ? email : "your email address"}</strong>
             <br />
-            Enter the code to activate your account.
+            Please check your email (and spam folder) to verify your account.
           </Typography>
 
           <Button
             variant="contained"
             fullWidth
-            sx={{ py: 1.2, borderRadius: 2, mb: 2 }}
-            onClick={() => window.open("https://mail.google.com", "_blank")}
+            sx={{ py: 1.2, mb: 2 }}
+            onClick={() => navigate("/login")}
           >
-            Open Gmail
+            Back to Login
           </Button>
 
           <Button
             variant="outlined"
-            component={Link}
-            to={`/verify-email?email=${encodeURIComponent(email)}`}
             fullWidth
-            sx={{ py: 1.2, borderRadius: 2 }}
+            sx={{ py: 1.2 }}
+            onClick={handleOpenModal}
           >
-            Enter Verification Code
+            Resend Verification Email
           </Button>
+
+          <Typography sx={{ mt: 3, fontSize: 14, color: "text.secondary" }}>
+            Didn’t receive the email? Click <strong>Resend</strong>.
+          </Typography>
         </Paper>
       </Box>
 

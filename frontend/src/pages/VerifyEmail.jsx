@@ -1,92 +1,86 @@
-// ======================================================
-// VerifyEmail.jsx (Improved UI — Logic Preserved)
-// Source: :contentReference[oaicite:5]{index=5}
-// ======================================================
-
+// ===============================================
+// VerifyEmail.jsx — Final Updated Version
+// ===============================================
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import axios from "axios";
+
+import { Box, Typography, Paper, Button } from "@mui/material";
 
 import Navbar from "../components/Navbar";
 import { Footer } from "../components/Footer";
 
-import { Box, Paper, Typography, Button } from "@mui/material";
-import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
+import api from "../utils/api";
+import Toast from "../components/Toast";
+import ResendVerifyModal from "../components/ResendVerifyModal";
 
 export default function VerifyEmail() {
   const [searchParams] = useSearchParams();
-  const token = searchParams.get("token");
   const navigate = useNavigate();
 
-  const [status, setStatus] = useState("loading");
-  const [message, setMessage] = useState("Verifying your email...");
-  const [resending, setResending] = useState(false);
+  const token = searchParams.get("token");
+
+  const [status, setStatus] = useState("loading"); 
+  // loading | success | error
+
+  const [modalOpen, setModalOpen] = useState(false);
+
+  // Extract email from backend after token verification (optional)
+  const [email, setEmail] = useState("");
 
   useEffect(() => {
     if (!token) {
       setStatus("error");
-      setMessage("Invalid verification link.");
       return;
     }
 
-    axios
-      .get(`${process.env.REACT_APP_API_URL}/auth/verify-email?token=${token}`)
-      .then((res) => {
-        const msg = res.data?.message;
-
-        if (msg === "Email already verified") {
-          setStatus("success");
-          setMessage("Your email is already verified!");
-          return;
-        }
+    const verify = async () => {
+      try {
+        const { data } = await api.post("/auth/verify-email", { token });
 
         setStatus("success");
-        setMessage("Your email has been verified successfully!");
-      })
-      .catch((err) => {
-        const msg = err?.response?.data?.message;
+
+        if (data?.email) setEmail(data.email);
+
+        Toast.success("Email verified successfully!");
+        
+        // Auto redirect after 3 seconds
+        setTimeout(() => navigate("/login"), 2500);
+
+      } catch (err) {
         setStatus("error");
-        setMessage(msg || "Verification link expired or invalid.");
-      });
+        Toast.error(
+          err?.response?.data?.message ||
+            "Verification link is invalid or expired."
+        );
+      }
+    };
+
+    verify();
   }, [token, navigate]);
 
-  const resendEmail = async () => {
-    setResending(true);
-    try {
-      const email = localStorage.getItem("pending_email");
-      await axios.post(
-        `${process.env.REACT_APP_API_URL}/auth/resend-verify-link`,
-        { email }
-      );
-      alert("A new verification email has been sent.");
-    } catch {
-      alert("Unable to resend verification email.");
-    }
-    setResending(false);
-  };
-
-  const renderIcon = () => {
-    if (status === "loading")
-      return <div className="spinner-border text-primary mb-3"></div>;
-
-    if (status === "success")
-      return <FaCheckCircle size={60} color="#28a745" className="mb-3" />;
-
-    return <FaTimesCircle size={60} color="#dc3545" className="mb-3" />;
+  const openResendModal = () => {
+    setModalOpen(true);
   };
 
   return (
     <>
       <Navbar />
 
+      {/* Resend Verification Modal */}
+      <ResendVerifyModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        defaultEmail={email}
+      />
+
       <Box
         sx={{
-          minHeight: "78vh",
+          minHeight: "75vh",
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
           px: 2,
-          py: 5,
+          backgroundColor: "#f4f6fb",
         }}
       >
         <Paper
@@ -94,53 +88,112 @@ export default function VerifyEmail() {
           sx={{
             width: "100%",
             maxWidth: 480,
-            p: 4,
             textAlign: "center",
-            borderRadius: 3,
+            p: { xs: 3, md: 5 },
+            borderRadius: 4,
             border: "1px solid",
             borderColor: "divider",
+            backgroundColor: "white",
           }}
         >
-          {renderIcon()}
-
-          <Typography variant="h5" fontWeight={800} mb={1}>
-            Email Verification
-          </Typography>
-
-          <Typography variant="body1" color="text.secondary" mb={3}>
-            {message}
-          </Typography>
-
+          {/* ====================== */}
+          {/* SUCCESS STATE */}
+          {/* ====================== */}
           {status === "success" && (
-            <Button
-              fullWidth
-              variant="contained"
-              sx={{ py: 1.2, borderRadius: 2 }}
-              onClick={() => navigate("/login")}
-            >
-              Go to Login
-            </Button>
-          )}
-
-          {status === "error" && (
             <>
+              <Typography
+                variant="h4"
+                fontWeight={800}
+                sx={{ mb: 2, color: "primary.main" }}
+              >
+                Email Verified 🎉
+              </Typography>
+
+              <Typography sx={{ mb: 3, color: "text.secondary", lineHeight: 1.6 }}>
+                Your email has been successfully verified.
+                <br />
+                Redirecting you to login…
+              </Typography>
+
               <Button
                 fullWidth
                 variant="contained"
-                sx={{ py: 1.2, borderRadius: 2, mb: 2 }}
+                sx={{ py: 1.2 }}
+                onClick={() => navigate("/login")}
+              >
+                Go to Login
+              </Button>
+            </>
+          )}
+
+          {/* ====================== */}
+          {/* LOADING STATE */}
+          {/* ====================== */}
+          {status === "loading" && (
+            <>
+              <Typography variant="h5" fontWeight={700} sx={{ mb: 1 }}>
+                Verifying Email…
+              </Typography>
+              <Typography sx={{ mb: 3, color: "text.secondary" }}>
+                Please wait a moment.
+              </Typography>
+
+              <Box
+                className="spinner"
+                sx={{
+                  mx: "auto",
+                  width: 55,
+                  height: 55,
+                  border: "5px solid rgba(0,0,0,0.2)",
+                  borderTopColor: "primary.main",
+                  borderRadius: "50%",
+                  animation: "spin 0.7s linear infinite",
+                }}
+              />
+
+              <style>{`
+                @keyframes spin {
+                  to { transform: rotate(360deg); }
+                }
+              `}</style>
+            </>
+          )}
+
+          {/* ====================== */}
+          {/* ERROR STATE */}
+          {/* ====================== */}
+          {status === "error" && (
+            <>
+              <Typography
+                variant="h5"
+                fontWeight={800}
+                sx={{ mb: 2, color: "error.main" }}
+              >
+                Verification Failed
+              </Typography>
+
+              <Typography sx={{ mb: 3, lineHeight: 1.6, color: "text.secondary" }}>
+                The verification link is invalid or has expired.
+                <br />
+                You can request a new verification email.
+              </Typography>
+
+              <Button
+                variant="contained"
+                fullWidth
+                sx={{ py: 1.2, mb: 2 }}
                 onClick={() => navigate("/login")}
               >
                 Back to Login
               </Button>
 
               <Button
-                fullWidth
-                disabled={resending}
                 variant="outlined"
-                sx={{ py: 1.2, borderRadius: 2 }}
-                onClick={resendEmail}
+                fullWidth
+                sx={{ py: 1.2 }}
+                onClick={openResendModal}
               >
-                {resending ? "Resending..." : "Resend Verification Email"}
+                Resend Verification Email
               </Button>
             </>
           )}

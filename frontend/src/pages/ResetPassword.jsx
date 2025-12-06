@@ -1,69 +1,88 @@
-// ======================================================
-// ResetPassword.jsx (Improved UI — Logic Preserved)
-// Source: :contentReference[oaicite:4]{index=4}
-// ======================================================
-
-import { useState, useEffect } from "react";
+// =======================================================
+// ResetPassword.jsx — Final Updated Version
+// =======================================================
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import api from "../utils/api";
+
+import {
+  Box,
+  Typography,
+  Paper,
+  TextField,
+  Button,
+  IconButton,
+  InputAdornment,
+} from "@mui/material";
+
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
 import Navbar from "../components/Navbar";
 import { Footer } from "../components/Footer";
-import { Box, Paper, Typography, TextField, Button } from "@mui/material";
+
+import api from "../utils/api";
+import Loader from "../components/Loader";        // ✔ INLINE BUTTON LOADER
+import Toast from "../components/Toast";
 
 export default function ResetPassword() {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
   const token = searchParams.get("token");
+  
+  const [validated, setValidated] = useState(false);
+  const [validationLoading, setValidationLoading] = useState(true);
 
   const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
+  const [showPw, setShowPw] = useState(false);
 
   const [loading, setLoading] = useState(false);
-  const [validated, setValidated] = useState(true);
-  const [error, setError] = useState("");
 
   useEffect(() => {
     if (!token) {
       setValidated(false);
-      setError("Invalid password reset link.");
+      setValidationLoading(false);
+      Toast.error("Invalid or missing reset token.");
       return;
     }
 
-    api
-      .post("/auth/password/validate-token", { token })
-      .then(() => setValidated(true))
-      .catch((err) => {
-        const msg =
-          err?.response?.data?.message ||
-          "This reset link is invalid or has expired.";
+    const validateToken = async () => {
+      try {
+        await api.post("/auth/password/validate-token", { token });
+        setValidated(true);
+      } catch (err) {
         setValidated(false);
-        setError(msg);
-      });
+        Toast.error("This reset link is invalid or expired.");
+      } finally {
+        setValidationLoading(false);
+      }
+    };
+
+    validateToken();
   }, [token]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (password.length < 6)
-      return setError("Password must be at least 6 characters long.");
-
-    if (password !== confirm) return setError("Passwords do not match.");
+    if (!password || password.length < 6) {
+      Toast.error("Password must be at least 6 characters");
+      return;
+    }
 
     setLoading(true);
-    setError("");
 
     try {
       await api.post("/auth/password/reset", { token, password });
+      Toast.success("Password reset successful!");
       navigate("/reset-success");
     } catch (err) {
-      const msg =
+      Toast.error(
         err?.response?.data?.message ||
-        "Unable to reset your password. Link may have expired.";
-      setError(msg);
+          "Failed to reset password. Please try again."
+      );
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
@@ -72,96 +91,132 @@ export default function ResetPassword() {
 
       <Box
         sx={{
-          minHeight: "78vh",
-          bgcolor: "#f4f6fb",
+          minHeight: "75vh",
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
           px: 2,
           py: 6,
+          backgroundColor: "#f4f6fb",
         }}
       >
         <Paper
           elevation={0}
           sx={{
             width: "100%",
-            maxWidth: 450,
-            p: 4,
+            maxWidth: 420,
+            p: { xs: 3, md: 5 },
             borderRadius: 4,
             border: "1px solid",
             borderColor: "divider",
-            background: "white",
+            backgroundColor: "white",
+            textAlign: "center",
           }}
         >
-          <Typography variant="h5" fontWeight={800} textAlign="center" mb={1}>
-            Reset Password
-          </Typography>
+          {/* ======================== */}
+          {/* LOADING WHILE VALIDATING */}
+          {/* ======================== */}
+          {validationLoading && (
+            <>
+              <Typography variant="h5" fontWeight={700} sx={{ mb: 2 }}>
+                Validating Link…
+              </Typography>
 
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            textAlign="center"
-            mb={3}
-          >
-            Enter your new password below.
-          </Typography>
+              <Box
+                sx={{
+                  mx: "auto",
+                  width: 55,
+                  height: 55,
+                  border: "5px solid rgba(0,0,0,0.2)",
+                  borderTopColor: "primary.main",
+                  borderRadius: "50%",
+                  animation: "spin 0.7s linear infinite",
+                }}
+              />
 
-          {error && (
-            <Box
-              sx={{
-                bgcolor: "#f8d7da",
-                color: "#842029",
-                p: 2,
-                borderRadius: 2,
-                mb: 2,
-                fontSize: "14px",
-                textAlign: "center",
-              }}
-            >
-              {error}
-              {!validated && (
-                <Button
-                  onClick={() => navigate("/forgot-password")}
-                  fullWidth
-                  sx={{ mt: 2, borderRadius: 2 }}
-                  variant="contained"
-                >
-                  Request New Reset Link
-                </Button>
-              )}
-            </Box>
+              <style>{`
+                @keyframes spin { to { transform: rotate(360deg); } }
+              `}</style>
+            </>
           )}
 
-          {validated && (
-            <form onSubmit={handleSubmit}>
-              <TextField
-                label="New Password"
-                type="password"
-                fullWidth
-                margin="normal"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+          {/* ======================== */}
+          {/* INVALID TOKEN */}
+          {/* ======================== */}
+          {!validationLoading && !validated && (
+            <>
+              <Typography variant="h5" fontWeight={800} sx={{ mb: 2, color: "error.main" }}>
+                Invalid or Expired Link
+              </Typography>
 
-              <TextField
-                label="Confirm Password"
-                type="password"
-                fullWidth
-                margin="normal"
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
-              />
+              <Typography sx={{ mb: 3, color: "text.secondary" }}>
+                The password reset link is invalid or expired.
+              </Typography>
 
               <Button
-                type="submit"
-                fullWidth
-                disabled={loading}
                 variant="contained"
-                sx={{ mt: 2, py: 1.2, borderRadius: 2 }}
+                fullWidth
+                sx={{ py: 1.2 }}
+                onClick={() => navigate("/forgot-password")}
               >
-                {loading ? "Resetting..." : "Reset Password"}
+                Try Again
               </Button>
-            </form>
+            </>
+          )}
+
+          {/* ======================== */}
+          {/* VALID TOKEN SHOW FORM */}
+          {/* ======================== */}
+          {!validationLoading && validated && (
+            <>
+              <Typography variant="h5" fontWeight={800} sx={{ mb: 2 }}>
+                Reset Your Password
+              </Typography>
+
+              <Typography sx={{ mb: 3, color: "text.secondary" }}>
+                Enter a new password below.
+              </Typography>
+
+              <form onSubmit={handleSubmit}>
+                <TextField
+                  label="New Password"
+                  type={showPw ? "text" : "password"}
+                  fullWidth
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  margin="normal"
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton onClick={() => setShowPw((s) => !s)} edge="end">
+                          {showPw ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+
+                <Button
+                  type="submit"
+                  variant="contained"
+                  fullWidth
+                  disabled={loading}
+                  sx={{
+                    mt: 2,
+                    py: 1.3,
+                    fontSize: 16,
+                    textTransform: "none",
+                    borderRadius: 2,
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                >
+                  {loading ? <Loader /> : "Reset Password"}
+                </Button>
+              </form>
+            </>
           )}
         </Paper>
       </Box>

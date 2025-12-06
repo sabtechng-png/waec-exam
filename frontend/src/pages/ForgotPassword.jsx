@@ -1,52 +1,61 @@
 // ======================================================
-// ForgotPassword.jsx (Improved UI — Logic Preserved)
-// Source: :contentReference[oaicite:1]{index=1}
+// ForgotPassword.jsx — Final Updated Version
 // ======================================================
-
 import { useState } from "react";
+
 import {
+  Box,
+  Typography,
+  Paper,
   TextField,
   Button,
   Snackbar,
   Alert,
-  Box,
-  Paper,
-  Typography,
 } from "@mui/material";
 
-import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { Footer } from "../components/Footer";
+
 import api from "../utils/api";
+import Toast from "../components/Toast";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
+  const [snackbar, setSnackbar] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const [error, setError] = useState("");
-  const [successMsg, setSuccessMsg] = useState("");
+  const validate = () => {
+    if (!email) return "Email is required";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+      return "Please enter a valid email address";
+    return "";
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!email) return setError("Email is required");
+    const v = validate();
+    if (v) {
+      setSnackbar(v);
+      return;
+    }
 
+    setSnackbar("");
     setLoading(true);
-    setError("");
 
     try {
       await api.post("/auth/password/request", { email });
 
-      setSuccessMsg(
-        "A password reset link has been sent to your email. Please check your inbox."
+      Toast.success(
+        "If an account exists, a reset link has been sent to your email."
       );
 
       setEmail("");
     } catch (err) {
       const msg =
         err?.response?.data?.message ||
-        "Unable to process your request. Please try again.";
-      setError(msg);
+        "Failed to send reset link. Please try again.";
+      setSnackbar(msg);
     } finally {
       setLoading(false);
     }
@@ -58,99 +67,82 @@ export default function ForgotPassword() {
 
       <Box
         sx={{
-          minHeight: "85vh",
+          minHeight: "75vh",
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
           px: 2,
           py: 6,
-          bgcolor: "#f4f6fb",
+          backgroundColor: "#f4f6fb",
         }}
       >
         <Paper
           elevation={0}
           sx={{
             width: "100%",
-            maxWidth: 430,
+            maxWidth: 420,
             p: { xs: 3, md: 5 },
             borderRadius: 4,
-            textAlign: "center",
             border: "1px solid",
             borderColor: "divider",
             backgroundColor: "white",
+            textAlign: "center",
           }}
         >
-          <Typography variant="h5" fontWeight={800} mb={1}>
-            Forgot Password?
-          </Typography>
-
           <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{ mb: 3, lineHeight: 1.7 }}
+            variant="h5"
+            fontWeight={800}
+            sx={{ mb: 2, letterSpacing: -0.5 }}
           >
-            Enter your registered email address and we will send you a
-            password reset link.
+            Forgot Password
           </Typography>
 
-          {/* ERROR SNACKBAR */}
-          <Snackbar
-            open={!!error}
-            autoHideDuration={5000}
-            onClose={() => setError("")}
-            anchorOrigin={{ vertical: "top", horizontal: "center" }}
-          >
-            <Alert severity="error" variant="filled" sx={{ width: "100%" }}>
-              {error}
-            </Alert>
-          </Snackbar>
+          <Typography sx={{ mb: 3, color: "text.secondary" }}>
+            Enter your email address and we’ll send you a reset link.
+          </Typography>
 
-          {/* SUCCESS SNACKBAR */}
           <Snackbar
-            open={!!successMsg}
-            autoHideDuration={5000}
-            onClose={() => setSuccessMsg("")}
+            open={!!snackbar}
+            autoHideDuration={3500}
+            onClose={() => setSnackbar("")}
             anchorOrigin={{ vertical: "top", horizontal: "center" }}
           >
             <Alert
-              severity="success"
+              onClose={() => setSnackbar("")}
+              severity="error"
               variant="filled"
-              sx={{ width: "100%", bgcolor: "#0d6efd", color: "#fff" }}
+              sx={{ width: "100%" }}
             >
-              {successMsg}
+              {snackbar}
             </Alert>
           </Snackbar>
 
-          {/* FORM */}
           <form onSubmit={handleSubmit}>
             <TextField
-              fullWidth
-              label="Enter your email"
+              label="Email Address"
               type="email"
+              fullWidth
               required
-              margin="normal"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              margin="normal"
             />
 
             <Button
-              fullWidth
               type="submit"
               variant="contained"
+              fullWidth
               disabled={loading}
               sx={{
                 mt: 2,
                 py: 1.3,
+                fontSize: 16,
+                textTransform: "none",
                 borderRadius: 2,
-                fontSize: "16px",
               }}
             >
               {loading ? "Sending..." : "Send Reset Link"}
             </Button>
-
-            <Box sx={{ mt: 2, fontSize: 14 }}>
-              <Link to="/login">Back to Login</Link>
-            </Box>
           </form>
         </Paper>
       </Box>
