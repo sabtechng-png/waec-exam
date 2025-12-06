@@ -139,7 +139,7 @@ function AppWrapper() {
         <Route path="/neco" element={<NECOPage />} />
 
         {/* Public Page for Ads */}
-        <Route path="/public-exam" element={<PublicExamPage />} />
+        <Route path="/practice" element={<PublicExamPage />} />
 
         {/* AUTH ROUTES */}
         <Route
