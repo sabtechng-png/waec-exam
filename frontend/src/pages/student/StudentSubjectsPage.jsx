@@ -1,258 +1,285 @@
-// ========================================================
-// StudentSubjectsPage.jsx — FULL CORRECTED VERSION
-// ========================================================
 import React, { useEffect, useState } from "react";
 import {
   Box,
+  Paper,
+  Typography,
   Button,
   Chip,
-  CircularProgress,
-  Container,
-  Paper,
+  Grid,
   Snackbar,
   Alert,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Typography,
+  CircularProgress,
 } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { School, PlayArrow, RestartAlt, DeleteForever } from "@mui/icons-material";
 import api from "../../utils/api";
+import { useNavigate } from "react-router-dom";
 
 export default function StudentSubjectsPage() {
   const navigate = useNavigate();
+
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [loadingAction, setLoadingAction] = useState(null);
+  const [actionLoading, setActionLoading] = useState(null);
   const [toast, setToast] = useState({ open: false, message: "", severity: "info" });
 
-  // -----------------------------------------------------
-  // Load all subjects with registration status
-  // -----------------------------------------------------
-  const refresh = async () => {
+  // ==========================================================
+  // LOAD SUBJECTS
+  // ==========================================================
+  const loadSubjects = async () => {
     try {
       setLoading(true);
       const res = await api.get("/api/student/subjects");
       setSubjects(res.data.subjects || []);
     } catch (err) {
-      console.error("Error loading subjects:", err);
-      setToast({ open: true, message: "Error loading subjects", severity: "error" });
+      setToast({
+        open: true,
+        message: "Error loading subjects",
+        severity: "error",
+      });
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    refresh();
+    loadSubjects();
   }, []);
 
-  // -----------------------------------------------------
-  // Register Subject
-  // -----------------------------------------------------
-  const registerSubject = async (subjectId) => {
+  // ==========================================================
+  // REGISTER SUBJECT
+  // ==========================================================
+  const handleRegister = async (subjectId) => {
     try {
-      setLoadingAction(subjectId);
+      setActionLoading(subjectId);
       await api.post("/api/student/subjects/register", { subject_id: subjectId });
-      setToast({ open: true, message: "Subject registered successfully", severity: "success" });
-      await refresh();
+
+      setToast({
+        open: true,
+        message: "Subject registered successfully!",
+        severity: "success",
+      });
+
+      loadSubjects();
     } catch (err) {
       setToast({
         open: true,
-        message: err.response?.data?.message || "Error registering subject",
+        message: err.response?.data?.message || "Failed to register subject",
         severity: "error",
       });
     } finally {
-      setLoadingAction(null);
+      setActionLoading(null);
     }
   };
 
-  // -----------------------------------------------------
-  // Start or Resume Exam
-  // -----------------------------------------------------
-  const startExam = async (subjectId) => {
+  // ==========================================================
+  // START / RESUME EXAM
+  // ==========================================================
+  const handleStartExam = async (subjectId) => {
     try {
-      setLoadingAction(subjectId);
+      setActionLoading(subjectId);
+
       const res = await api.post("/exam/start", { subject_id: subjectId });
-      if (res.status === 200 && res.data?.exam?.id) {
-        navigate(`/exam/${subjectId}`, { state: { exam_id: res.data.exam.id } });
+
+      if (res.data?.exam?.id) {
+        navigate(`/exam/session/${res.data.exam.id}`);
       } else {
-        setToast({ open: true, message: "Unable to start exam", severity: "error" });
+        setToast({
+          open: true,
+          message: "Unable to start exam",
+          severity: "error",
+        });
       }
     } catch (err) {
-      console.error("Start exam error:", err);
       setToast({
         open: true,
-        message: err.response?.data?.message || "Unable to start exam",
+        message: err.response?.data?.message || "Cannot start exam",
         severity: "error",
       });
     } finally {
-      setLoadingAction(null);
+      setActionLoading(null);
     }
   };
 
-  // -----------------------------------------------------
-  // Clear (Reset) Subject
-  // -----------------------------------------------------
-  const clearSubject = async (subjectId) => {
+  // ==========================================================
+  // CLEAR SUBJECT (DO NOT ALLOW IF exam in progress)
+  // ==========================================================
+  const handleClear = async (subjectId, status) => {
+    if (status === "in_progress") {
+      setToast({
+        open: true,
+        message: "Cannot clear while exam is in progress.",
+        severity: "warning",
+      });
+      return;
+    }
+
     try {
-      setLoadingAction(subjectId);
+      setActionLoading(subjectId);
       await api.post("/api/student/subjects/reset", { subject_id: subjectId });
-      setToast({ open: true, message: "Subject cleared successfully", severity: "success" });
-      await refresh();
+
+      setToast({
+        open: true,
+        message: "Subject cleared.",
+        severity: "success",
+      });
+
+      loadSubjects();
     } catch (err) {
-      console.error("Clear subject error:", err);
       setToast({
         open: true,
         message: err.response?.data?.message || "Error clearing subject",
         severity: "error",
       });
     } finally {
-      setLoadingAction(null);
+      setActionLoading(null);
     }
   };
 
-  // -----------------------------------------------------
-  // View Result for Completed Subjects
-  // -----------------------------------------------------
-  const viewResult = (subjectId) => {
-    navigate(`/exam/result/${subjectId}`);
+  // ==========================================================
+  // STATUS UI CHIP
+  // ==========================================================
+  const StatusChip = ({ status }) => {
+    const map = {
+      none: { label: "Available", color: "success" },
+      registered: { label: "Registered", color: "primary" },
+      in_progress: { label: "In Progress", color: "warning" },
+      completed: { label: "Completed", color: "secondary" },
+    };
+
+    const item = map[status] ?? map.none;
+
+    return (
+      <Chip
+        label={item.label}
+        color={item.color}
+        variant="filled"
+        sx={{ fontWeight: "bold" }}
+      />
+    );
   };
 
-  // -----------------------------------------------------
-  // Status Chip
-  // -----------------------------------------------------
-  const getStatusChip = (status) => {
-    switch (status) {
-      case "none":
-        return <Chip label="available" color="success" size="small" variant="outlined" />;
-      case "pending":
-        return <Chip label="registered" color="primary" size="small" variant="outlined" />;
-      case "in_progress":
-        return <Chip label="in progress" color="warning" size="small" variant="outlined" />;
-      case "completed":
-        return <Chip label="completed" color="success" size="small" variant="outlined" />;
-      default:
-        return <Chip label="unknown" size="small" variant="outlined" />;
-    }
-  };
+  // ==========================================================
+  // MAIN UI
+  // ==========================================================
+  return (
+    <Box p={2}>
+      <Typography variant="h5" fontWeight={700} mb={3}>
+        <School sx={{ mr: 1 }} /> Register Subjects
+      </Typography>
 
+      {loading ? (
+        <Box display="flex" justifyContent="center" p={8}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        <Grid container spacing={2}>
+          {subjects.map((s) => (
+            <Grid item xs={12} sm={6} md={4} key={s.subject_id}>
+              <Paper
+                elevation={3}
+                sx={{
+                  p: 2,
+                  borderRadius: 3,
+                  minHeight: 170,
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  transition: "0.2s",
+                  "&:hover": { boxShadow: "0 6px 18px rgba(0,0,0,0.12)" },
+                }}
+              >
+                {/* Subject title */}
+                <Box>
+                  <Typography variant="h6" fontWeight={700}>
+                    {s.name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Code: {s.code}
+                  </Typography>
 
-// -----------------------------------------------------
-// UI RENDER
-// -----------------------------------------------------
-return (
-  <Container maxWidth="md" sx={{ py: 3 }}>
-    <Typography variant="h5" fontWeight={600} gutterBottom>
-      📚 Subjects
-    </Typography>
+                  <Box mt={1}>
+                    <StatusChip status={s.registered_status} />
+                  </Box>
+                </Box>
 
-    {loading ? (
-      <Box display="flex" justifyContent="center" py={5}>
-        <CircularProgress />
-      </Box>
-    ) : subjects.length === 0 ? (
-      <Paper sx={{ p: 3, textAlign: "center" }}>
-        <Typography>No subjects found.</Typography>
-      </Paper>
-    ) : (
-      <Paper sx={{ p: 2 }}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Subject</TableCell>
-              <TableCell>Code</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell align="right">Action</TableCell>
-            </TableRow>
-          </TableHead>
-
-          <TableBody>
-            {subjects.map((s) => (
-              <TableRow key={s.subject_id}>
-                <TableCell>{s.name}</TableCell>
-                <TableCell>{s.code}</TableCell>
-                <TableCell>{getStatusChip(s.registered_status)}</TableCell>
-
-                <TableCell align="right">
-                  {/* ✅ AVAILABLE or COMPLETED → REGISTER */}
-                  {(s.registered_status === "none" ||
-                    s.registered_status === "completed" ||
-                    s.registered_status === "available") && (
+                {/* ACTION BUTTONS */}
+                <Box mt={2} display="flex" gap={1}>
+                  {s.registered_status === "none" && (
                     <Button
+                      fullWidth
                       variant="contained"
-                      size="small"
-                      disabled={loadingAction === s.subject_id}
-                      onClick={() => registerSubject(s.subject_id)}
+                      onClick={() => handleRegister(s.subject_id)}
+                      disabled={actionLoading === s.subject_id}
                     >
-                      {loadingAction === s.subject_id ? (
-                        <CircularProgress size={18} />
-                      ) : (
-                        "Register"
-                      )}
+                      Register
                     </Button>
                   )}
 
-                  {/* 🔵 REGISTERED → TAKE EXAM + CLEAR */}
                   {s.registered_status === "registered" && (
                     <>
                       <Button
+                        fullWidth
                         variant="contained"
-                        size="small"
-                        disabled={loadingAction === s.subject_id}
-                        onClick={() => startExam(s.subject_id)}
+                        color="primary"
+                        startIcon={<PlayArrow />}
+                        onClick={() => handleStartExam(s.subject_id)}
+                        disabled={actionLoading === s.subject_id}
                       >
-                        {loadingAction === s.subject_id ? (
-                          <CircularProgress size={18} />
-                        ) : (
-                          "Take Exam"
-                        )}
+                        Take Exam
                       </Button>
+
                       <Button
+                        fullWidth
                         variant="outlined"
                         color="error"
-                        size="small"
-                        sx={{ ml: 1 }}
-                        disabled={loadingAction === s.subject_id}
-                        onClick={() => clearSubject(s.subject_id)}
+                        startIcon={<DeleteForever />}
+                        onClick={() => handleClear(s.subject_id, s.registered_status)}
+                        disabled={actionLoading === s.subject_id}
                       >
                         Clear
                       </Button>
                     </>
                   )}
 
-                  {/* 🟠 IN PROGRESS → RESUME */}
                   {s.registered_status === "in_progress" && (
                     <Button
+                      fullWidth
                       variant="contained"
                       color="warning"
-                      size="small"
-                      disabled={loadingAction === s.subject_id}
-                      onClick={() => startExam(s.subject_id)}
+                      startIcon={<RestartAlt />}
+                      onClick={() => handleStartExam(s.subject_id)}
+                      disabled={actionLoading === s.subject_id}
                     >
-                      Resume
+                      Resume Exam
                     </Button>
                   )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Paper>
-    )}
 
-    {/* ✅ Toast notifications */}
-    <Snackbar
-      open={toast.open}
-      autoHideDuration={3000}
-      onClose={() => setToast({ ...toast, open: false })}
-      anchorOrigin={{ vertical: "top", horizontal: "center" }}
-    >
-      <Alert severity={toast.severity}>{toast.message}</Alert>
-    </Snackbar>
-  </Container>
-);
+                  {s.registered_status === "completed" && (
+                    <Button
+                      fullWidth
+                      variant="outlined"
+                      startIcon={<RestartAlt />}
+                      onClick={() => handleRegister(s.subject_id)}
+                      disabled={actionLoading === s.subject_id}
+                    >
+                      Retake Exam
+                    </Button>
+                  )}
+                </Box>
+              </Paper>
+            </Grid>
+          ))}
+        </Grid>
+      )}
 
-
+      {/* Toast */}
+      <Snackbar
+        open={toast.open}
+        autoHideDuration={3000}
+        onClose={() => setToast({ ...toast, open: false })}
+      >
+        <Alert severity={toast.severity}>{toast.message}</Alert>
+      </Snackbar>
+    </Box>
+  );
 }

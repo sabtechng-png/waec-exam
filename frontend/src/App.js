@@ -56,7 +56,11 @@ import StudentResultDetailsPage from "./pages/dashboard/StudentResultDetailsPage
 import StudentSubjectsPage from "./pages/student/StudentSubjectsPage";
 import SubjectPage from "./pages/student/ManageSubjectsPage";
 import LeaderboardPage from "./pages/dashboard/LeaderboardPage";
+import SubjectLeaderboardPage from "./pages/dashboard/SubjectLeaderboardPage";
 import SettingsPage from "./pages/dashboard/SettingsPage";
+import MyRankPage  from "./pages/dashboard/MyRankPage";
+
+
 
 // ---------- Admin ----------
 import AdminLayout from "./layout/AdminLayout";
@@ -77,10 +81,15 @@ import ObjectiveQuestionsList from "./pages/admin/english/ObjectiveQuestionsList
 import SectionConfigPage from "./pages/admin/english/SectionConfigPage";
 
 // ---------- Exam ----------
+import ExamStartPage from "./pages/exam/ExamStartPage";
+import ExamSessionPage from "./pages/exam/ExamSessionPage";
 import ExamPage from "./pages/exam/ExamPage";
 import EnglishExamPage from "./pages/exam/EnglishExamPage";
 import AttemptHistory from "./pages/exam/AttemptHistory";
 import ReviewPage from "./pages/exam/ReviewPage";
+
+
+
 
 // ===============================
 // GLOBAL WRAPPER
@@ -181,6 +190,10 @@ function AppWrapper() {
           }
         />
 
+<Route path="/exam/start/:subjectId" element={<ExamStartPage />} />
+<Route path="/exam/session/:examId" element={<ExamSessionPage />} />
+
+
         <Route path="/english-exam/:examId" element={<EnglishExamPage />} />
 
         <Route
@@ -217,6 +230,16 @@ function AppWrapper() {
           <Route path="manage-subject" element={<SubjectPage />} />
           <Route path="leaderboard" element={<LeaderboardPage />} />
           <Route path="settings" element={<SettingsPage />} />
+		  <Route path="my-rank" element={<MyRankPage />} />
+
+		  
+		  // ...
+<Route
+  path="leaderboard/subject/:subjectId"
+  element={<SubjectLeaderboardPage />}
+/>
+		  
+		  
         </Route>
 
         {/* ---------------- EXTRA PUBLIC PAGES ---------------- */}

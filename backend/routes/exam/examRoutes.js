@@ -11,5 +11,7 @@ router.use("/english-exam", require("./english/englishQuestionRoutes"));
 router.use("/english-exam", require("./english/englishAnswerRoutes"));
 router.use("/english-exam", require("./english/englishSubmitRoutes"));
 
+router.use("/", require("./examSessionRoutes"));
+
 
 module.exports = router;

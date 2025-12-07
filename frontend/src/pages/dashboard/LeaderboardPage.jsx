@@ -1,127 +1,195 @@
+// ======================================
+// FIXED GLOBAL LEADERBOARD PAGE
+// ======================================
+
 import { useEffect, useState } from "react";
 import {
   Box,
   Typography,
   Paper,
   CircularProgress,
+  Avatar,
+  Chip,
   Table,
-  TableContainer,
   TableHead,
+  TableBody,
   TableRow,
   TableCell,
-  TableBody,
-  Chip,
-  Button,
+  TableContainer,
   Stack,
+  Divider,
 } from "@mui/material";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import api from "../../utils/api";
 
 export default function LeaderboardPage() {
   const [loading, setLoading] = useState(true);
-  const [list, setList] = useState([]);
-  const [pagination, setPagination] = useState(null);
+  const [rows, setRows] = useState([]);
 
-  const loadData = async (page = 1) => {
+  const loadLeaderboard = async () => {
     setLoading(true);
     try {
-      const { data } = await api.get(`/leaderboard?page=${page}&limit=50`);
-      setList(data.leaderboard);
-      setPagination(data.pagination);
+      const { data } = await api.get("/leaderboard/global");
+      setRows(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("LEADERBOARD LOAD ERROR:", err);
+      console.error("Leaderboard Load Error:", err);
+      setRows([]);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadData(1);
+    loadLeaderboard();
   }, []);
 
   if (loading)
     return (
-      <Box textAlign="center" mt={5}>
+      <Box textAlign="center" mt={8}>
         <CircularProgress />
+        <Typography mt={2}>Loading leaderboard...</Typography>
       </Box>
     );
 
+  // 🟢 If truly empty
+  if (!rows || rows.length === 0) {
+    return (
+      <Box>
+        <Typography variant="h5" fontWeight={700} sx={{ mb: 1 }}>
+          🏆 Global Leaderboard
+        </Typography>
+        <Typography variant="body2" sx={{ mb: 3, color: "gray" }}>
+          Ranking based on highest submitted exam scores.
+        </Typography>
+
+        <Paper sx={{ p: 3, borderRadius: 3 }}>
+          <Typography>No leaderboard data available yet.</Typography>
+        </Paper>
+      </Box>
+    );
+  }
+
+  // 🟢 Only take the number available (1–3)
+  const champions = rows.slice(0, 3);
+
   return (
     <Box>
-      <Typography variant="h5" fontWeight={700} sx={{ mb: 3 }}>
-        🏆 Leaderboard — Top Students
+      <Typography variant="h5" fontWeight={700} sx={{ mb: 1 }}>
+        🏆 Global Leaderboard
+      </Typography>
+      <Typography variant="body2" sx={{ mb: 3, color: "gray" }}>
+        Ranking based on highest submitted exam scores.
       </Typography>
 
-      <Paper sx={{ p: 2, borderRadius: 2 }}>
+      {/* ===== TOP CHAMPIONS (works even with 1 or 2) ===== */}
+      <Typography variant="h6" sx={{ mb: 2, fontWeight: 700 }}>
+        🔥 Top Champions
+      </Typography>
+
+      <Stack
+        direction={{ xs: "column", md: "row" }}
+        spacing={2}
+        sx={{ mb: 3 }}
+      >
+        {champions.map((item, index) => {
+          const name = item.full_name || "Student";
+          const medalColors = ["#FFD700", "#C0C0C0", "#CD7F32"];
+
+          return (
+            <Paper
+              key={item.student_id}
+              elevation={3}
+              sx={{
+                p: 2,
+                flex: 1,
+                borderRadius: 3,
+                textAlign: "center",
+                borderTop: `6px solid ${medalColors[index]}`,
+              }}
+            >
+              <EmojiEventsIcon
+                sx={{ color: medalColors[index], fontSize: 38, mb: 1 }}
+              />
+
+              <Avatar
+                sx={{
+                  mx: "auto",
+                  bgcolor: "primary.main",
+                  width: 60,
+                  height: 60,
+                  fontSize: 24,
+                }}
+              >
+                {name.charAt(0).toUpperCase()}
+              </Avatar>
+
+              <Typography mt={1} fontWeight={700}>
+                {name}
+              </Typography>
+
+              <Chip
+                label={`Best Score: ${item.best_score}%`}
+                size="small"
+                color="success"
+                sx={{ mt: 1 }}
+              />
+            </Paper>
+          );
+        })}
+      </Stack>
+
+      <Divider sx={{ mb: 3 }} />
+
+      {/* ===== FULL LEADERBOARD TABLE ===== */}
+      <Paper sx={{ p: 2, borderRadius: 3 }}>
         <TableContainer>
           <Table size="small">
             <TableHead>
               <TableRow>
                 <TableCell>Rank</TableCell>
                 <TableCell>Student</TableCell>
-                <TableCell>Exams Taken</TableCell>
-                <TableCell>Average Score</TableCell>
                 <TableCell>Best Score</TableCell>
-                <TableCell>Best Subject</TableCell>
               </TableRow>
             </TableHead>
 
             <TableBody>
-              {list.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={6} align="center">
-                    No leaderboard data available.
-                  </TableCell>
-                </TableRow>
-              )}
-
-              {list.map((row, index) => {
-                const avg = Math.round(Number(row.avg_score || 0));
-                const best = Number(row.best_score || 0);
-
-                let avgColor =
-                  avg >= 70 ? "success" : avg >= 50 ? "warning" : "error";
-
-                const rank = (pagination.currentPage - 1) * 50 + (index + 1);
-
+              {rows.map((item, i) => {
+                const name = item.full_name || "Student";
                 const medal =
-                  rank === 1
+                  i === 0
                     ? "#FFD700"
-                    : rank === 2
+                    : i === 1
                     ? "#C0C0C0"
-                    : rank === 3
+                    : i === 2
                     ? "#CD7F32"
                     : null;
 
                 return (
-                  <TableRow key={row.student_id}>
-                    <TableCell>
-                      <Stack direction="row" alignItems="center" spacing={1}>
-                        <Typography fontWeight={600}>{rank}</Typography>
+                  <TableRow hover key={item.student_id}>
+                    <TableCell width={100}>
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        <Typography fontWeight={700}>{i + 1}</Typography>
                         {medal && (
-                          <EmojiEventsIcon style={{ color: medal }} />
+                          <EmojiEventsIcon
+                            sx={{ color: medal, fontSize: 20 }}
+                          />
                         )}
                       </Stack>
                     </TableCell>
 
-                    <TableCell>{row.full_name}</TableCell>
-
                     <TableCell>
-                      <Chip label={row.exams_taken} color="primary" size="small" />
-                    </TableCell>
-
-                    <TableCell>
-                      <Chip label={`${avg}%`} color={avgColor} />
-                    </TableCell>
-
-                    <TableCell>
-                      <Chip label={`${best}%`} variant="outlined" color="success" />
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        <Avatar sx={{ bgcolor: "primary.main" }}>
+                          {name.charAt(0)}
+                        </Avatar>
+                        <Typography>{name}</Typography>
+                      </Stack>
                     </TableCell>
 
                     <TableCell>
                       <Chip
-                        label={row.best_subject}
-                        color="secondary"
+                        label={`${item.best_score}%`}
+                        color="success"
                         variant="outlined"
                       />
                     </TableCell>
@@ -131,34 +199,6 @@ export default function LeaderboardPage() {
             </TableBody>
           </Table>
         </TableContainer>
-
-        {/* PAGINATION */}
-        <Stack
-          direction="row"
-          justifyContent="center"
-          spacing={2}
-          sx={{ mt: 2 }}
-        >
-          <Button
-            variant="outlined"
-            disabled={pagination.currentPage === 1}
-            onClick={() => loadData(pagination.currentPage - 1)}
-          >
-            Previous
-          </Button>
-
-          <Typography sx={{ pt: 1 }}>
-            Page {pagination.currentPage} of {pagination.totalPages}
-          </Typography>
-
-          <Button
-            variant="outlined"
-            disabled={pagination.currentPage >= pagination.totalPages}
-            onClick={() => loadData(pagination.currentPage + 1)}
-          >
-            Next
-          </Button>
-        </Stack>
       </Paper>
     </Box>
   );

@@ -8,6 +8,7 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(localStorage.getItem("waec_token"));
   const [loading, setLoading] = useState(true);
 
+  // LOGIN
   const login = (userData, jwtToken) => {
     setUser(userData);
     setToken(jwtToken);
@@ -16,37 +17,44 @@ export function AuthProvider({ children }) {
     localStorage.setItem("waec_user", JSON.stringify(userData));
   };
 
+  // LOGOUT
   const logout = () => {
     setUser(null);
     setToken(null);
+
     localStorage.removeItem("waec_token");
     localStorage.removeItem("waec_user");
+
     window.location.href = "/login";
   };
 
+  // AUTO SESSION RESTORE
   useEffect(() => {
     const storedUser = localStorage.getItem("waec_user");
     const storedToken = localStorage.getItem("waec_token");
 
-    // No session
-    if (!storedToken || !storedUser) {
-      setLoading(false);
-      return;
+    // 1️⃣ Restore instantly
+    if (storedToken && storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+        setToken(storedToken);
+      } catch {}
     }
 
-    // Load cached user immediately (instant dashboard)
-    try {
-      const parsed = JSON.parse(storedUser);
-      if (parsed && parsed.role) setUser(parsed);
-    } catch {}
+    setLoading(false); // UI can load now
 
-    setLoading(false); // UI ready immediately
-
-    // Background token validation
-    api
-      .get("/auth/me")
-      .then((res) => setUser(res.data.user))
-      .catch(() => logout());
+    // 2️⃣ Background check (NO LOGOUT ON FAIL)
+    if (storedToken) {
+      api
+        .get("/auth/me")
+        .then((res) => {
+          setUser(res.data.user);
+          localStorage.setItem("waec_user", JSON.stringify(res.data.user));
+        })
+        .catch(() => {
+          console.warn("Auth validation failed (ignored). Keeping session alive.");
+        });
+    }
   }, []);
 
   return (

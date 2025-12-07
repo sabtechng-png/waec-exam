@@ -3,157 +3,98 @@ const router = express.Router();
 const { pool } = require("../../db");
 const auth = require("../../middleware/authMiddleware");
 
-// =============================================
-// SUBMIT EXAM
-// POST /exam/:examId/submit
-// body: { remaining_seconds? }
-// =============================================
-router.post("/:examId/submit", auth, async (req, res) => {
-  const studentId = req.user.userId;
-  const { examId } = req.params;
-  const { remaining_seconds } = req.body || {};
+// ===============================================================
+// SUBMIT EXAM + COMPUTE SCORE  (CORRECT exam_id USAGE)
+// ===============================================================
+router.post("/:exam_id/submit", auth, async (req, res) => {
+  const { exam_id } = req.params;
+  const student_id = req.user.id;
 
-  const client = await pool.connect();
   try {
-    await client.query("BEGIN");
-
-    // 1️⃣ Validate exam & get subject
-    const ses = await client.query(
-      `SELECT id, subject_id, status
-         FROM exam_sessions
-        WHERE id=$1 AND student_id=$2
-        LIMIT 1`,
-      [examId, studentId]
+    // 1. Validate exam session belongs to student
+    const sessionRes = await pool.query(
+      `SELECT * FROM exam_sessions
+       WHERE id = $1 AND student_id = $2 AND status = 'in_progress'`,
+      [exam_id, student_id]
     );
 
-    if (!ses.rowCount) {
-      await client.query("ROLLBACK");
-      return res
-        .status(404)
-        .json({ message: "Exam not found or not authorized." });
+    if (sessionRes.rows.length === 0) {
+      return res.status(400).json({ error: "Invalid or already submitted exam session." });
     }
 
-    if (ses.rows[0].status === "submitted") {
-      await client.query("ROLLBACK");
-      return res.status(400).json({ message: "Exam already submitted." });
-    }
+    const subject_id = sessionRes.rows[0].subject_id;
 
-    const subjectId = ses.rows[0].subject_id;
-
-    // 2️⃣ Fetch all exam questions (exact 50 used in this exam)
-    //    Requires exam_question_order table populated by /start route
-    const qset = await client.query(
-      `SELECT eq.question_id,
-              q.correct_option
-         FROM exam_question_order eq
-         JOIN questions q ON q.id = eq.question_id
-        WHERE eq.exam_id = $1
-        ORDER BY eq.seq ASC`,
-      [examId]
+    // 2. Get the list of questions for this exam
+    const qRes = await pool.query(
+      `SELECT q.id AS question_id, q.correct_option
+       FROM exam_question_order o
+       JOIN questions q ON q.id = o.question_id
+       WHERE o.exam_id = $1
+       ORDER BY o.seq`,
+      [exam_id]
     );
 
-    if (!qset.rowCount) {
-      // Fallback: if for some reason the table is empty, treat all subject questions as the exam
-      const fallback = await client.query(
-        `SELECT id AS question_id, correct_option
-           FROM questions
-          WHERE subject_id=$1
-          ORDER BY id ASC
-          LIMIT 50`,
-        [subjectId]
-      );
-
-      if (!fallback.rowCount) {
-        await client.query("ROLLBACK");
-        return res
-          .status(400)
-          .json({ message: "No questions available for this exam." });
-      }
-
-      qset.rows.push(...fallback.rows);
-    }
-
-    const total = qset.rowCount;
-
-    // 3️⃣ Fetch all answers for this exam
-    const ans = await client.query(
+    // 3. Load all answers saved by the student for this exam
+    const aRes = await pool.query(
       `SELECT question_id, selected_option
-         FROM exam_answers
-        WHERE exam_id=$1 AND student_id=$2`,
-      [examId, studentId]
+       FROM exam_answers
+       WHERE exam_id = $1 AND student_id = $2`,
+      [exam_id, student_id]
     );
 
-    const answerMap = new Map();
-    ans.rows.forEach((r) => {
-      answerMap.set(r.question_id, r.selected_option);
+    // Map answers: { question_id: selected_option }
+    const answerMap = {};
+    aRes.rows.forEach(a => {
+      answerMap[a.question_id] = a.selected_option;
     });
 
-    // 4️⃣ Compute marks
+    // 4. Compute score
     let correct = 0;
     let wrong = 0;
-    let unanswered = 0;
 
-    for (const row of qset.rows) {
-      const userOpt = answerMap.get(row.question_id);
-      const correctOpt = row.correct_option;
+    qRes.rows.forEach(q => {
+      const studentAnswer = answerMap[q.question_id];
 
-      if (!userOpt) {
-        unanswered++;
-      } else if (
-        userOpt.toUpperCase() === (correctOpt || "").toUpperCase()
-      ) {
+      if (!studentAnswer) {
+        wrong++;
+      } else if (studentAnswer === q.correct_option) {
         correct++;
       } else {
         wrong++;
       }
-    }
+    });
 
+    const total = qRes.rows.length;
     const score = Math.round((correct / total) * 100);
 
-    // 5️⃣ Remaining minutes
-    const remaining_minutes =
-      typeof remaining_seconds === "number"
-        ? Math.max(0, Math.ceil(remaining_seconds / 60))
-        : 0;
-
-    // 6️⃣ Update exam_sessions
-    await client.query(
+    // 5. Update exam session status & score
+    await pool.query(
       `UPDATE exam_sessions
-          SET status='submitted',
-              submitted_at=NOW(),
-              score=$1,
-              remaining_minutes=$2
-        WHERE id=$3`,
-      [score, remaining_minutes, examId]
+       SET status = 'submitted',
+           score = $1,
+           submitted_at = NOW()
+       WHERE id = $2`,
+      [score, exam_id]
     );
 
-    // 7️⃣ Mark student_subjects as completed
-    await client.query(
-      `UPDATE student_subjects
-          SET status='completed',
-              archived=TRUE,
-              finished_at = COALESCE(finished_at, NOW())
-        WHERE student_id=$1 AND subject_id=$2 AND archived=FALSE`,
-      [studentId, subjectId]
+    // 6. Clear subject registration (clean DB)
+    await pool.query(
+      `DELETE FROM student_subjects
+       WHERE student_id = $1 AND subject_id = $2`,
+      [student_id, subject_id]
     );
-
-    await client.query("COMMIT");
 
     return res.json({
-      message: "Exam submitted successfully",
+      message: "Exam submitted successfully.",
       score,
-      total,
       correct,
       wrong,
-      unanswered,
-      remaining_minutes,
+      total
     });
+
   } catch (err) {
-    await client.query("ROLLBACK");
-    console.error("🔥 SUBMIT ERROR:", err);
-    return res.status(500).json({ message: "Error submitting exam." });
-  } finally {
-    client.release();
+    console.error("Submit exam error:", err);
+    return res.status(500).json({ error: "Failed to submit exam." });
   }
 });
 

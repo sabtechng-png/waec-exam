@@ -78,6 +78,11 @@ app.use("/auth", require("./routes/authRoutes"));
 app.use("/auth/google", require("./routes/authGoogleRoutes"));
 
 // ============================
+// 👤 USER PROFILE ROUTES
+// ============================
+app.use("/user", require("./routes/user/updateProfile"));
+
+// ============================
 // 📌 ADMIN ROUTES
 // ============================
 
@@ -100,6 +105,8 @@ app.use("/api/student/subjects", require("./routes/studentSubjectsRoutes"));
 app.use("/api/student/sessions", require("./routes/studentSessionRoutes"));
 app.use("/student/results", require("./routes/studentResultsRoutes"));
 app.use("/dashboard", require("./routes/dashboardRoutes"));
+app.use("/leaderboard/my-rank", require("./routes/leaderboard/myRankRoutes"));
+app.use("/leaderboard", require("./routes/leaderboard/leaderboardRoutes"));
 
 app.use("/public", require("./routes/publicSubjectRoutes"));
 app.use("/public/exam", require("./routes/publicExamRoutes"));

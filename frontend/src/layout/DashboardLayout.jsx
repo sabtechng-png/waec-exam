@@ -17,7 +17,7 @@ import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import { useTheme } from "@mui/material/styles";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import SidebarMenu from "../components/SidebarMenu";
-import { useAuth } from "../context/AuthContext";   // ✅ NEW
+import { useAuth } from "../context/AuthContext";
 
 const drawerWidth = 240;
 const appBarHeight = 64;
@@ -28,17 +28,33 @@ export default function DashboardLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout } = useAuth();   // ✅ NEW
-  const displayName = user?.full_name || "Student";   // ✅ NEW
+  const { user, logout } = useAuth();
+  const displayName = user?.full_name || "Student";
 
   const toggleDrawer = () => setMobileOpen(!mobileOpen);
 
+  // ============================
+  // UPDATED MENU ITEMS WITH CORRECT SUBMENU LINKS
+  // ============================
   const items = [
     { label: "Dashboard", to: "/dashboard", icon: "dashboard" },
-    { label: "Subjects", to: "/dashboard/subjects", icon: "subjects" },
-    { label: "Manage Subject ", to: "/dashboard/manage-subject", icon: "practice" },
+    { label: "Exam Page", to: "/dashboard/subjects", icon: "subjects" },
+  
     { label: "My Results", to: "/dashboard/results", icon: "results" },
-    { label: "Leaderboard", to: "/dashboard/leaderboard", icon: "leaderboard" },
+
+    {
+      label: "Leaderboard",
+      icon: "leaderboard",
+      children: [
+        { label: "Global", to: "/dashboard/leaderboard" },
+
+        // ✔ CORRECT LINK YOU REQUESTED
+        { label: "By Subject", to: "/dashboard/leaderboard/subject/:subjectId" },
+
+        { label: "My Rank", to: "/dashboard/my-rank" },
+      ],
+    },
+
     { label: "Settings", to: "/dashboard/settings", icon: "settings" },
     { label: "Logout", to: "/logout", icon: "logout" },
   ];
@@ -53,7 +69,7 @@ export default function DashboardLayout() {
           activePath={location.pathname}
           onNavigate={(to) => {
             if (to === "/logout") {
-              logout();       // ✅ logout now triggers auth logout
+              logout();
               return;
             }
             navigate(to);
@@ -67,6 +83,8 @@ export default function DashboardLayout() {
   return (
     <Box sx={{ display: "flex" }}>
       <CssBaseline />
+
+      {/* TOP BAR */}
       <AppBar
         position="fixed"
         elevation={0}
@@ -85,11 +103,12 @@ export default function DashboardLayout() {
               <MenuIcon />
             </IconButton>
           )}
+
           <Typography variant="h6" sx={{ fontWeight: 800 }}>
             CBT <span style={{ color: "#1976d2" }}>Master</span>
           </Typography>
 
-          {/* ✅ Dynamic user + Logout button */}
+          {/* USER INFO */}
           <Box sx={{ ml: "auto", display: "flex", alignItems: "center", gap: 1.5 }}>
             <AccountCircleIcon color="action" />
             <Typography variant="body2" color="text.secondary">
@@ -102,7 +121,7 @@ export default function DashboardLayout() {
         </Toolbar>
       </AppBar>
 
-      {/* Drawer */}
+      {/* SIDEBAR */}
       <Box component="nav" sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}>
         <Drawer
           variant="temporary"
@@ -129,7 +148,7 @@ export default function DashboardLayout() {
         </Drawer>
       </Box>
 
-      {/* Main */}
+      {/* MAIN CONTENT */}
       <Box
         component="main"
         sx={{

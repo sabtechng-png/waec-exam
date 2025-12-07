@@ -22,124 +22,125 @@ import {
   Divider,
   Card,
 } from "@mui/material";
-
 import { useParams, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
-import {
-  ArrowBack,
-  ArrowForward,
-  Flag,
-  FlagOutlined,
-  AccessTime,
-} from "@mui/icons-material";
+import { ArrowBack, ArrowForward, Flag, FlagOutlined, AccessTime } from "@mui/icons-material";
 import api from "../../utils/api";
 
 export default function ExamPage() {
-  const { subjectId } = useParams();
+  const { subjectId } = useParams(); // subject id from route: /exam/:subjectId
   const navigate = useNavigate();
 
-  const [exam, setExam] = useState(null);
-  const [qOrder, setQOrder] = useState([]);
-  const [qIndex, setQIndex] = useState(0);
-  const [currentQ, setCurrentQ] = useState(null);
-  const [answers, setAnswers] = useState({});
-  const [flags, setFlags] = useState({});
-  const [loading, setLoading] = useState(true);
+  const [exam, setExam] = useState(null);           // { id, subject_id, subject_name, remaining_minutes, ... }
+  const [qOrder, setQOrder] = useState([]);         // array of question IDs
+  const [qIndex, setQIndex] = useState(0);          // current index in qOrder
+  const [currentQ, setCurrentQ] = useState(null);   // current question data
+  const [answers, setAnswers] = useState({});       // { [qid]: 'A' | 'B' | 'C' | 'D' }
+  const [flags, setFlags] = useState({});           // { [qid]: true/false }
+  const [loadingInit, setLoadingInit] = useState(true);
+  const [loadingQuestion, setLoadingQuestion] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState({
-    open: false,
-    message: "",
-    severity: "info",
-  });
+  const [toast, setToast] = useState({ open: false, message: "", severity: "info" });
   const [confirmSubmit, setConfirmSubmit] = useState(false);
 
   const [leftSec, setLeftSec] = useState(0);
   const timerRef = useRef(null);
 
-  // ================================
-  // START or RESUME exam
-  // ================================
+  // =====================================================
+  // START or RESUME exam (uses /exam/start)
+  // =====================================================
   useEffect(() => {
     const startExam = async () => {
       try {
-        const res = await api.post("/exam/start", { subject_id: subjectId });
-        const { exam, question_ids } = res.data;
+        setLoadingInit(true);
 
-        // ⭐ FIX: Subject name included here
+        const res = await api.post("/exam/start", { subject_id: subjectId });
+        const { exam, question_ids, answers: savedAnswers, flags: savedFlags } = res.data;
+
+        // store exam meta
+        const remainingMinutes = exam?.remaining_minutes ?? 15;
+        const remainingSeconds = exam?.remaining_seconds ?? remainingMinutes * 60;
+
         setExam({
           id: exam.id,
           subject_id: exam.subject_id,
-          subject_name: exam.subject_name, // ⭐ ADDED
-          remaining_minutes: exam.remaining_minutes ?? 60,
+          subject_name: exam.subject_name,
+          remaining_minutes: remainingMinutes,
         });
 
+        // question order
         setQOrder(question_ids || []);
 
-        // Load saved answers + flags
-        setAnswers(res.data.answers || {});
-        setFlags(res.data.flags || {});
+        // pre-fill answers/flags if resuming
+        setAnswers(savedAnswers || {});
+        setFlags(savedFlags || {});
 
-        // Timer
-        setLeftSec((exam.remaining_minutes ?? 60) * 60);
+        // timer
+        setLeftSec(remainingSeconds);
       } catch (err) {
+        console.error("❌ Unable to start exam:", err);
         setToast({
           open: true,
           severity: "error",
           message: err.response?.data?.message || "Unable to start exam.",
         });
       } finally {
-        setLoading(false);
+        setLoadingInit(false);
       }
     };
 
     startExam();
   }, [subjectId]);
 
-  // ================================
+  // =====================================================
   // TIMER ENGINE
-  // ================================
-  const startTimer = () => {
+  // =====================================================
+  useEffect(() => {
+    if (!exam) return;
+
+    // clear existing timer
     clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
       setLeftSec((s) => Math.max(0, s - 1));
     }, 1000);
-  };
 
-  useEffect(() => {
-    if (!exam) return;
-    startTimer();
     return () => clearInterval(timerRef.current);
   }, [exam]);
 
   useEffect(() => {
-    if (leftSec === 0 && exam) handleSubmit();
-  }, [leftSec]); // eslint-disable-line
+    if (leftSec === 0 && exam) {
+      handleSubmit(); // auto-submit when time ends
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [leftSec]);
 
-  // ================================
-  // ⭐ REMOVED BROKEN AUTOSAVE CALL (PATCH /exam/:id/time)
-  // ================================
-
-  // ================================
-  // LOAD CURRENT QUESTION
-  // ================================
+  // =====================================================
+  // LOAD CURRENT QUESTION (GET /exam/:examId/question/:qid)
+  // =====================================================
   useEffect(() => {
-    const loadQ = async () => {
-      if (!exam || !qOrder[qIndex]) return;
-
-      setLoading(true);
+    const loadQuestion = async () => {
+      if (!exam || !qOrder.length) return;
       const qid = qOrder[qIndex];
+      if (!qid) return;
+
+      setLoadingQuestion(true);
 
       try {
-        const [qRes, ansRes] = await Promise.all([
-          api.get(`/exam/${exam?.id}/question/${qid}`),
-          api.get(`/exam/${exam?.id}/answer/${qid}`).catch(() => ({
-            data: {},
-          })),
-        ]);
+        // Question
+        const qRes = await api.get(`/exam/${exam.id}/question/${qid}`);
 
-        setCurrentQ(qRes.data);
+        // Existing answer (if any)
+        let ansData = {};
+        try {
+          const ansRes = await api.get(`/exam/${exam.id}/answer/${qid}`);
+          ansData = ansRes.data || {};
+        } catch {
+          ansData = {};
+        }
 
-        const ansData = ansRes.data || {};
+        setCurrentQ(qRes.data || null);
+
+        // hydrate local answer if backend has something
         if (ansData.selected_option) {
           setAnswers((prev) => ({
             ...prev,
@@ -148,68 +149,100 @@ export default function ExamPage() {
         }
 
         if (typeof ansData.flagged === "boolean") {
-          setFlags((prev) => ({ ...prev, [qid]: ansData.flagged }));
+          setFlags((prev) => ({
+            ...prev,
+            [qid]: ansData.flagged,
+          }));
         }
       } catch (err) {
-        console.error("Error loading question/answer:", err);
+        console.error("❌ Error loading question or answer:", err);
+        setToast({
+          open: true,
+          severity: "error",
+          message: "Error loading question.",
+        });
       } finally {
-        setLoading(false);
+        setLoadingQuestion(false);
       }
     };
 
-    loadQ();
+    loadQuestion();
   }, [exam, qIndex, qOrder]);
 
-  // ================================
-  // SAVE ANSWER
-  // ================================
+  // =====================================================
+  // SAVE ANSWER  (PATCH /exam/:examId/answer)
+  // =====================================================
   const saveAnswer = async (option) => {
     if (!currentQ || !exam?.id) return;
+    const qid = currentQ.id;
+
+    setAnswers((prev) => ({
+      ...prev,
+      [qid]: option,
+    }));
 
     setSaving(true);
-    setAnswers((prev) => ({ ...prev, [currentQ.id]: option }));
-
     try {
-      await api.patch(`/exam/${exam?.id}/answer`, {
-        question_id: currentQ.id,
+      await api.patch(`/exam/${exam.id}/answer`, {
+        question_id: qid,
         selected_option: option,
-        flagged: flags[currentQ.id] || false,
+        flagged: flags[qid] || false,
+        // remaining_seconds: leftSec, // optional if you want to store
       });
     } catch (err) {
-      console.error("Error saving answer:", err);
+      console.error("❌ Error saving answer:", err);
+      setToast({
+        open: true,
+        severity: "error",
+        message: "Failed to save answer.",
+      });
     } finally {
       setSaving(false);
     }
   };
 
+  // Flag / unflag question
   const toggleFlag = async () => {
     if (!currentQ || !exam?.id) return;
-    const nextFlag = !flags[currentQ.id];
+    const qid = currentQ.id;
+    const nextFlag = !flags[qid];
 
-    setFlags((prev) => ({ ...prev, [currentQ.id]: nextFlag }));
+    setFlags((prev) => ({
+      ...prev,
+      [qid]: nextFlag,
+    }));
 
     try {
-      await api.patch(`/exam/${exam?.id}/answer`, {
-        question_id: currentQ.id,
-        selected_option: answers[currentQ.id] || null,
+      await api.patch(`/exam/${exam.id}/answer`, {
+        question_id: qid,
+        selected_option: answers[qid] || null,
         flagged: nextFlag,
       });
-    } catch (err) {}
+    } catch (err) {
+      console.error("❌ Error toggling flag:", err);
+    }
   };
 
-  // ================================
-  // NAV + SUBMIT
-  // ================================
-  const nextQ = () => setQIndex((i) => Math.min(i + 1, qOrder.length - 1));
-  const prevQ = () => setQIndex((i) => Math.max(i - 1, 0));
+  // =====================================================
+  // NAVIGATION + SUBMIT
+  // =====================================================
+  const nextQ = () => {
+    setQIndex((i) => Math.min(i + 1, qOrder.length - 1));
+  };
+
+  const prevQ = () => {
+    setQIndex((i) => Math.max(i - 1, 0));
+  };
 
   const handleSubmit = async () => {
     if (!exam?.id) return;
 
     try {
-      await api.post(`/exam/${exam?.id}/submit`, {
+      await api.post(`/exam/${exam.id}/submit`, {
         remaining_seconds: leftSec,
       });
+
+      clearInterval(timerRef.current);
 
       Swal.fire({
         icon: "success",
@@ -218,31 +251,31 @@ export default function ExamPage() {
         showConfirmButton: false,
       });
 
+      // 🔁 After submission, go back to subject page (you can adjust this path)
       navigate("/dashboard/manage-subject");
     } catch (err) {
-      Swal.fire({ icon: "error", title: "Submission Failed" });
+      console.error("❌ Error submitting exam:", err);
+      Swal.fire({
+        icon: "error",
+        title: "Submission Failed",
+        text: err.response?.data?.message || "Unable to submit exam.",
+      });
     }
   };
 
-  // ================================
+  // =====================================================
   // RENDER
-  // ================================
-  if (loading && !exam)
+  // =====================================================
+  if (loadingInit && !exam) {
     return (
-      <Box
-        height="70vh"
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-      >
+      <Box height="70vh" display="flex" alignItems="center" justifyContent="center">
         <CircularProgress />
       </Box>
     );
+  }
 
   const answeredCount = Object.keys(answers).length;
-  const progress = qOrder.length
-    ? (answeredCount / qOrder.length) * 100
-    : 0;
+  const progress = qOrder.length ? (answeredCount / qOrder.length) * 100 : 0;
   const min = Math.floor(leftSec / 60);
   const sec = leftSec % 60;
 
@@ -261,7 +294,7 @@ export default function ExamPage() {
         }}
       >
         <Typography variant="h6" fontWeight={700}>
-          {exam?.subject_name} — CBT Examination
+          {exam?.subject_name || "Subject"} — CBT Examination
         </Typography>
 
         <Chip
@@ -272,6 +305,7 @@ export default function ExamPage() {
         />
       </Paper>
 
+      {/* PROGRESS BAR */}
       <LinearProgress
         variant="determinate"
         value={progress}
@@ -280,11 +314,7 @@ export default function ExamPage() {
 
       {/* QUESTION CARD */}
       <Paper elevation={3} sx={{ p: 3, borderRadius: 3, mb: 2 }}>
-        <Box
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-        >
+        <Box display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h6" fontWeight={700}>
             Question {qIndex + 1} of {qOrder.length}
           </Typography>
@@ -299,90 +329,95 @@ export default function ExamPage() {
 
         <Divider sx={{ my: 2 }} />
 
-        <Typography
-          variant="body1"
-          fontSize="1.15rem"
-          fontWeight={500}
-          sx={{ mb: 3 }}
-        >
-          {currentQ?.question}
-        </Typography>
+        {loadingQuestion || !currentQ ? (
+          <Box py={4} textAlign="center">
+            <CircularProgress />
+          </Box>
+        ) : (
+          <>
+            <Typography
+              variant="body1"
+              fontSize="1.15rem"
+              fontWeight={500}
+              sx={{ mb: 3 }}
+            >
+              {currentQ.question}
+            </Typography>
 
-        {/* OPTIONS */}
-        <Grid container spacing={2}>
-          {["A", "B", "C", "D"].map((opt) => {
-            const selected = answers[currentQ?.id] === opt;
+            {/* OPTIONS */}
+            <Grid container spacing={2}>
+              {["A", "B", "C", "D"].map((opt) => {
+                const qid = currentQ.id;
+                const selected = answers[qid] === opt;
+                const optText = currentQ[`option_${opt.toLowerCase()}`];
 
-            return (
-              <Grid item xs={12} key={opt}>
-                <Card
-                  onClick={() => saveAnswer(opt)}
-                  sx={{
-                    p: 2,
-                    cursor: "pointer",
-                    borderRadius: 2,
-                    border: selected
-                      ? "2px solid #1976d2"
-                      : "1px solid #ccc",
-                    backgroundColor: selected ? "#e3f2fd" : "#fff",
-                    boxShadow: selected
-                      ? "0 3px 10px rgba(25,118,210,.3)"
-                      : "0 1px 3px rgba(0,0,0,0.1)",
-                    transition: "0.15s",
-                    "&:hover": {
-                      boxShadow:
-                        "0 4px 12px rgba(0,0,0,0.15)",
-                    },
-                  }}
-                >
-                  <Typography fontSize="1.05rem">
-                    <strong>{opt}.</strong>{" "}
-                    {currentQ?.[
-                      `option_${opt.toLowerCase()}`
-                    ]}
-                  </Typography>
-                </Card>
-              </Grid>
-            );
-          })}
-        </Grid>
+                return (
+                  <Grid item xs={12} key={opt}>
+                    <Card
+                      onClick={() => saveAnswer(opt)}
+                      sx={{
+                        p: 2,
+                        cursor: "pointer",
+                        borderRadius: 2,
+                        border: selected ? "2px solid #1976d2" : "1px solid #ccc",
+                        backgroundColor: selected ? "#e3f2fd" : "#fff",
+                        boxShadow: selected
+                          ? "0 3px 10px rgba(25,118,210,.3)"
+                          : "0 1px 3px rgba(0,0,0,0.1)",
+                        transition: "0.15s",
+                        "&:hover": {
+                          boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                        },
+                      }}
+                    >
+                      <Typography fontSize="1.05rem">
+                        <strong>{opt}.</strong> {optText}
+                      </Typography>
+                    </Card>
+                  </Grid>
+                );
+              })}
+            </Grid>
 
-        {/* NAVIGATION */}
-        <Box
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-          mt={3}
-        >
-          <Button
-            variant="outlined"
-            startIcon={<ArrowBack />}
-            disabled={qIndex === 0}
-            onClick={prevQ}
-            sx={{ px: 4, py: 1.5 }}
-          >
-            Previous
-          </Button>
+            {/* NAVIGATION */}
+            <Box
+              display="flex"
+              justifyContent="space-between"
+              alignItems="center"
+              mt={3}
+            >
+              <Button
+                variant="outlined"
+                startIcon={<ArrowBack />}
+                disabled={qIndex === 0}
+                onClick={prevQ}
+                sx={{ px: 4, py: 1.5 }}
+              >
+                Previous
+              </Button>
 
-          <Button
-            variant="contained"
-            color="error"
-            onClick={() => setConfirmSubmit(true)}
-            sx={{ px: 5, py: 1.5, fontWeight: 700 }}
-          >
-            Submit Exam
-          </Button>
+              <Button
+                variant="contained"
+                color="error"
+                onClick={() => setConfirmSubmit(true)}
+                sx={{ px: 5, py: 1.5, fontWeight: 700 }}
+                disabled={saving}
+              >
+                Submit Exam
+              </Button>
 
-          <Button
-            variant="contained"
-            endIcon={<ArrowForward />}
-            disabled={qIndex === qOrder.length - 1}
-            onClick={nextQ}
-            sx={{ px: 4, py: 1.5 }}
-          >
-            Next
-          </Button>
-        </Box>
+              <Button
+                variant="contained"
+                endIcon={<ArrowForward />}
+                disabled={qIndex === qOrder.length - 1}
+                onClick={nextQ}
+                sx={{ px: 4, py: 1.5 }}
+              >
+                Next
+              </Button>
+            </Box>
+          </>
+        )}
       </Paper>
 
       {/* QUESTION MAP */}
@@ -396,9 +431,7 @@ export default function ExamPage() {
             <Grid item key={qid}>
               <Button
                 size="small"
-                variant={
-                  i === qIndex ? "contained" : "outlined"
-                }
+                variant={i === qIndex ? "contained" : "outlined"}
                 color={
                   flags[qid]
                     ? "warning"
@@ -407,11 +440,7 @@ export default function ExamPage() {
                     : "primary"
                 }
                 onClick={() => setQIndex(i)}
-                sx={{
-                  minWidth: 36,
-                  borderRadius: 2,
-                  fontWeight: 700,
-                }}
+                sx={{ minWidth: 36, borderRadius: 2, fontWeight: 700 }}
               >
                 {i + 1}
               </Button>
@@ -420,11 +449,8 @@ export default function ExamPage() {
         </Grid>
       </Paper>
 
-      {/* SUBMIT CONFIRM POPUP */}
-      <Dialog
-        open={confirmSubmit}
-        onClose={() => setConfirmSubmit(false)}
-      >
+      {/* SUBMIT CONFIRM DIALOG */}
+      <Dialog open={confirmSubmit} onClose={() => setConfirmSubmit(false)}>
         <DialogTitle>Submit Exam?</DialogTitle>
         <DialogContent>
           <Typography>
@@ -432,13 +458,12 @@ export default function ExamPage() {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmSubmit(false)}>
-            Cancel
-          </Button>
+          <Button onClick={() => setConfirmSubmit(false)}>Cancel</Button>
           <Button
             variant="contained"
             color="error"
             onClick={handleSubmit}
+            disabled={saving}
           >
             Submit Exam
           </Button>
@@ -449,17 +474,10 @@ export default function ExamPage() {
       <Snackbar
         open={toast.open}
         autoHideDuration={3500}
-        anchorOrigin={{
-          vertical: "top",
-          horizontal: "center",
-        }}
-        onClose={() =>
-          setToast({ ...toast, open: false })
-        }
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        onClose={() => setToast({ ...toast, open: false })}
       >
-        <Alert severity={toast.severity}>
-          {toast.message}
-        </Alert>
+        <Alert severity={toast.severity}>{toast.message}</Alert>
       </Snackbar>
     </Container>
   );

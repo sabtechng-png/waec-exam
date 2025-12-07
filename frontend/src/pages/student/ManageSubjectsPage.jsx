@@ -1,5 +1,5 @@
 // ========================================================
-// ManageSubjectsPage.jsx — FIXED ENGLISH CHECK
+// ManageSubjectsPage.jsx — ENGLISH CONDITION REMOVED
 // ========================================================
 import React, { useEffect, useState } from "react";
 import {
@@ -33,9 +33,6 @@ export default function ManageSubjectsPage() {
   const [tab, setTab] = useState("pending");
   const [loadingAction, setLoadingAction] = useState(null);
 
-  // -----------------------------------------
-  // Load subjects and statuses
-  // -----------------------------------------
   const loadSubjects = async () => {
     try {
       setLoading(true);
@@ -53,59 +50,35 @@ export default function ManageSubjectsPage() {
     loadSubjects();
   }, []);
 
-// -----------------------------------------
-// Start Exam (English gets its own route)
-// -----------------------------------------
-const startExam = async (subjectId) => {
-  try {
-    setLoadingAction(subjectId);
+  // -----------------------------------------
+  // Start Exam (NO English special case)
+  // -----------------------------------------
+  const startExam = async (subjectId) => {
+    try {
+      setLoadingAction(subjectId);
 
-    const subjectIdNum = Number(subjectId);
-
-    // 🔥 SPECIAL: English uses its own exam engine
-    if (subjectIdNum === 3) {
-      const res = await api.post("/english-exam/start", {
-        subject_id: subjectIdNum,
-      });
+      const res = await api.post("/exam/start", { subject_id: Number(subjectId) });
 
       if (res.status === 200 && res.data?.exam?.id) {
-        // ✅ FIXED — use REAL EXAM ID in the URL
-        return navigate(`/english-exam/${res.data.exam.id}`);
+        return navigate(`/exam/${res.data.exam.id}`);
       }
 
-      setToast({
-        open: true,
-        message: "Unable to start English exam",
-        severity: "error",
-      });
-
-      setLoadingAction(null);
-      return;
-    }
-
-    // 🔥 All other subjects use normal engine
-    const res = await api.post("/exam/start", { subject_id: subjectIdNum });
-
-    if (res.status === 200 && res.data?.exam?.id) {
-      navigate(`/exam/${res.data.exam.id}`);
-    } else {
       setToast({
         open: true,
         message: "Unable to start exam",
         severity: "error",
       });
+    } catch (err) {
+      console.error("Start exam error:", err);
+      setToast({
+        open: true,
+        message: err.response?.data?.message || "Unable to start exam",
+        severity: "error",
+      });
+    } finally {
+      setLoadingAction(null);
     }
-  } catch (err) {
-    console.error("Start exam error:", err);
-    setToast({
-      open: true,
-      message: err.response?.data?.message || "Unable to start exam",
-      severity: "error",
-    });
-  } finally {
-    setLoadingAction(null);
-  }
-};
+  };
 
   const resetSubject = async (subjectId) => {
     try {
@@ -129,9 +102,6 @@ const startExam = async (subjectId) => {
     navigate(`/exam/result/${subjectId}`);
   };
 
-  // -----------------------------------------
-  // Summary counts
-  // -----------------------------------------
   const total = subjects.length;
   const pendingCount = subjects.filter((s) => s.registered_status === "pending").length;
   const inProgressCount = subjects.filter((s) => s.registered_status === "in_progress").length;
@@ -145,16 +115,12 @@ const startExam = async (subjectId) => {
     completed: "success",
   };
 
-  // -----------------------------------------
-  // UI
-  // -----------------------------------------
   return (
     <Container maxWidth="md" sx={{ py: 3 }}>
       <Typography variant="h5" fontWeight={600} gutterBottom>
         🧩 Manage Subjects
       </Typography>
 
-      {/* SUMMARY BAR */}
       <Paper
         sx={{
           mb: 2,
@@ -167,21 +133,12 @@ const startExam = async (subjectId) => {
         }}
         elevation={2}
       >
-        <Box>
-          <strong>Total:</strong> {total}
-        </Box>
-        <Box sx={{ color: "#1976d2" }}>
-          <strong>Pending:</strong> {pendingCount}
-        </Box>
-        <Box sx={{ color: "#ed6c02" }}>
-          <strong>In Progress:</strong> {inProgressCount}
-        </Box>
-        <Box sx={{ color: "#2e7d32" }}>
-          <strong>Completed:</strong> {completedCount}
-        </Box>
+        <Box><strong>Total:</strong> {total}</Box>
+        <Box sx={{ color: "#1976d2" }}><strong>Pending:</strong> {pendingCount}</Box>
+        <Box sx={{ color: "#ed6c02" }}><strong>In Progress:</strong> {inProgressCount}</Box>
+        <Box sx={{ color: "#2e7d32" }}><strong>Completed:</strong> {completedCount}</Box>
       </Paper>
 
-      {/* TABS */}
       <Tabs
         value={tab}
         onChange={(e, val) => setTab(val)}
@@ -194,7 +151,6 @@ const startExam = async (subjectId) => {
         <Tab value="completed" label="Completed" />
       </Tabs>
 
-      {/* TABLE */}
       {loading ? (
         <Box display="flex" justifyContent="center" py={5}>
           <CircularProgress />
@@ -307,7 +263,6 @@ const startExam = async (subjectId) => {
         </Paper>
       )}
 
-      {/* TOAST */}
       <Snackbar
         open={toast.open}
         autoHideDuration={3000}

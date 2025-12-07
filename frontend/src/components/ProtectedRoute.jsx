@@ -3,23 +3,35 @@ import { useAuth } from "../context/AuthContext";
 import FullScreenLoader from "./FullScreenLoader";
 
 export default function ProtectedRoute({ children, role }) {
-  const { token, user, loading } = useAuth();
+  const { user, token, loading } = useAuth();
 
-  // wait for auto-login check
+  // Still restoring session from localStorage
   if (loading) return <FullScreenLoader />;
 
-  // not logged in → go to login page
+  // No token → not logged in
   if (!token) return <Navigate to="/login" replace />;
 
-  // if email not verified → send to verification page
-  if (user && user.is_verified === false) {
+  // Token exists but user not yet restored
+  if (!user) return <FullScreenLoader />;
+
+  // If email is not verified
+  if (user.is_verified === false) {
     return <Navigate to="/verify-email" replace />;
   }
 
-  // ✅ enforce role if provided
-  if (role && user?.role?.toLowerCase() !== role.toLowerCase()) {
-    return <Navigate to="/" replace />;
+  // If this route requires a specific role (student/admin)
+  if (role) {
+    const currentRole = user.role?.toLowerCase();
+    const requiredRole = role.toLowerCase();
+
+    if (currentRole !== requiredRole) {
+      // Wrong role → redirect based on role
+      return currentRole === "admin"
+        ? <Navigate to="/admin" replace />
+        : <Navigate to="/dashboard" replace />;
+    }
   }
 
+  // Everything OK → allow access
   return children;
 }

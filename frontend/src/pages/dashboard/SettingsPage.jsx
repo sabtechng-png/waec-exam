@@ -57,7 +57,7 @@ export default function SettingsPage() {
 
   const sendResetEmail = async () => {
     try {
-      await api.post("/auth/password/request", { email });
+      await api.post("/password/request", { email });
       showToast("Password reset link sent to your email.", "success");
     } catch (err) {
       console.error(err);
