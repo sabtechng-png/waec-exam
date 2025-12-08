@@ -148,62 +148,91 @@ router.get("/me", async (req, res) => {
 // ======================================================================
 // POST /auth/register  — FIXED (No more “Registration failed” bug)
 // ======================================================================
+// ======================================================================
+// POST /auth/register  — Optimized & Professional Version
+// ======================================================================
 router.post("/register", async (req, res) => {
   try {
     const { full_name, email, password } = req.body;
 
-    if (!full_name || !email || !password)
-      return res.status(400).json({ message: "All fields are required" });
+    // --------------------------------------------------------------
+    // Input Validation
+    // --------------------------------------------------------------
+    if (!full_name || !email || !password) {
+      return res
+        .status(400)
+        .json({ message: "Full name, email, and password are required." });
+    }
 
+    // Check if email already exists
     const exists = await pool.query(
-      "SELECT id FROM users WHERE email=$1 LIMIT 1",
+      "SELECT id FROM users WHERE email = $1 LIMIT 1",
       [email]
     );
 
-    if (exists.rowCount > 0)
-      return res.status(409).json({ message: "Email already registered" });
+    if (exists.rowCount > 0) {
+      return res
+        .status(409)
+        .json({ message: "This email is already registered." });
+    }
 
-    const hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+    // --------------------------------------------------------------
+    // Create User Account
+    // --------------------------------------------------------------
+    const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
     await pool.query(
-      `INSERT INTO users(full_name, email, password_hash, is_verified, role)
-       VALUES ($1,$2,$3,false,'student')`,
-      [full_name, email, hash]
+      `
+      INSERT INTO users (full_name, email, password_hash, is_verified, role)
+      VALUES ($1, $2, $3, false, 'student')
+      `,
+      [full_name, email, passwordHash]
     );
 
-    // create secure random verification token
+    // --------------------------------------------------------------
+    // Generate Verification Token
+    // --------------------------------------------------------------
     const token = crypto.randomBytes(32).toString("hex");
 
     await pool.query(
-      `UPDATE users 
-       SET verification_token=$1,
-           verification_expires = NOW() + INTERVAL '10 minutes'
-       WHERE email=$2`,
+      `
+      UPDATE users
+      SET verification_token = $1,
+          verification_expires = NOW() + INTERVAL '10 minutes'
+      WHERE email = $2
+      `,
       [token, email]
     );
 
     const verifyLink = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
 
-    // Try sending email (never break registration on failure)
-    try {
-      await transporter.sendMail({
+    // --------------------------------------------------------------
+    // Send Email (Fire-and-Forget — does NOT block API response)
+    // --------------------------------------------------------------
+    transporter
+      .sendMail({
         from: process.env.FROM_EMAIL,
         to: email,
-        subject: "Verify your CBT Master account",
+        subject: "Verify your CBT-Master account",
         html: htmlVerify(full_name, verifyLink),
         date: new Date().toUTCString(),
+      })
+      .catch((err) => {
+        console.error("EMAIL SEND FAILED:", err);
       });
-    } catch (err) {
-      console.error("EMAIL SEND FAILED:", err);
-    }
 
+    // --------------------------------------------------------------
+    // Final Success Response
+    // --------------------------------------------------------------
     return res.status(201).json({
-      message: "Account created. Please check your email to verify.",
+      message: "Account created successfully. Please check your email to verify your account.",
       email,
     });
   } catch (err) {
     console.error("REGISTER ERROR:", err);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({
+      message: "An unexpected server error occurred. Please try again later.",
+    });
   }
 });
 
@@ -352,43 +381,92 @@ router.post("/resend-verify-link", async (req, res) => {
 // ======================================================================
 // POST /auth/login — FIXED (auto token refresh for unverified users)
 // ======================================================================
+// ======================================================================
+// POST /auth/login — Professional, Secure, Complete
+// ======================================================================
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password)
-      return res.status(400).json({ message: "Email and password required" });
+    // --------------------------------------------------------------
+    // 1. Validate input
+    // --------------------------------------------------------------
+    if (!email || !password) {
+      return res
+        .status(400)
+        .json({ message: "Email and password are required." });
+    }
 
+    // --------------------------------------------------------------
+    // 2. Look up user
+    // --------------------------------------------------------------
     const r = await pool.query(
-      `SELECT id, full_name, email, password_hash, is_verified, role
-       FROM users WHERE email=$1 LIMIT 1`,
+      `
+      SELECT id, full_name, email, password_hash, is_verified, role
+      FROM users 
+      WHERE email = $1 
+      LIMIT 1
+      `,
       [email]
     );
 
-    if (r.rowCount === 0)
-      return res.status(401).json({ message: "Invalid credentials" });
+    if (r.rowCount === 0) {
+      return res
+        .status(401)
+        .json({ message: "Incorrect email or password." });
+    }
 
     const user = r.rows[0];
 
-    // If unverified, auto-generate new token
+    // --------------------------------------------------------------
+    // 3. Handle unverified accounts
+    // --------------------------------------------------------------
     if (!user.is_verified) {
-      const token = crypto.randomBytes(32).toString("hex");
+      const verifyToken = crypto.randomBytes(32).toString("hex");
 
       await pool.query(
-        `UPDATE users SET verification_token=$1,
-                          verification_expires = NOW() + INTERVAL '10 minutes'
-         WHERE email=$2`,
-        [token, email]
+        `
+        UPDATE users 
+        SET verification_token = $1,
+            verification_expires = NOW() + INTERVAL '10 minutes'
+        WHERE email = $2
+        `,
+        [verifyToken, email]
       );
 
-      return res.status(403).json({ message: "Email not verified", email });
+      const verifyLink = `${process.env.FRONTEND_URL}/verify-email?token=${verifyToken}`;
+
+      // Send verification email in background (non-blocking)
+      transporter
+        .sendMail({
+          from: process.env.FROM_EMAIL,
+          to: email,
+          subject: "Verify your CBT-Master account",
+          html: htmlVerify(user.full_name, verifyLink),
+          date: new Date().toUTCString(),
+        })
+        .catch((err) => console.error("LOGIN VERIFY EMAIL ERROR:", err));
+
+      return res
+        .status(403)
+        .json({ message: "Email not verified. Verification link resent. Verification Mail may delay due to the network ", email });
     }
 
+    // --------------------------------------------------------------
+    // 4. Validate password
+    // --------------------------------------------------------------
     const valid = await bcrypt.compare(password, user.password_hash);
-    if (!valid)
-      return res.status(401).json({ message: "Invalid credentials" });
 
-    const token = jwt.sign(
+    if (!valid) {
+      return res
+        .status(401)
+        .json({ message: "Incorrect email or password." });
+    }
+
+    // --------------------------------------------------------------
+    // 5. Generate JWT
+    // --------------------------------------------------------------
+    const jwtToken = jwt.sign(
       { userId: user.id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
@@ -396,14 +474,19 @@ router.post("/login", async (req, res) => {
 
     delete user.password_hash;
 
-    return res.json({
-      message: "Login successful",
+    // --------------------------------------------------------------
+    // 6. Respond success
+    // --------------------------------------------------------------
+    return res.status(200).json({
+      success: true,
+      message: "Login successful.",
       user,
-      token,
+      token: jwtToken,
     });
+
   } catch (err) {
-    console.error("LOGIN ERROR:", err);
-    res.status(500).json({ message: "Server error" });
+    console.error("[LOGIN ERROR]", err.message);
+    return res.status(500).json({ message: "Internal server error." });
   }
 });
 
