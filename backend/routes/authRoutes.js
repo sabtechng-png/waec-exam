@@ -14,6 +14,28 @@ process.env.TZ = "UTC";
 
 const BCRYPT_ROUNDS = 8;
 
+(async () => {
+  try {
+    let test = await nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT),
+      secure: false,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS
+      },
+      tls: { rejectUnauthorized: false }
+    }).verify();
+
+    console.log("SMTP OK:", test);
+  } catch (err) {
+    console.error("SMTP ERROR:", err);
+  }
+})();
+
+
+
+
 // ======================================================================
 // UNIVERSAL SMTP TRANSPORTER (Works on Localhost + Render)
 // ======================================================================
