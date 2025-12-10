@@ -1,5 +1,5 @@
 // ======================================================================
-//                AUTH ROUTES — RESEND EMAIL VERSION (RECOMMENDED)
+//                AUTH ROUTES — RESEND EMAIL FOR VERIFICATION ONLY
 // ======================================================================
 
 const express = require("express");
@@ -33,16 +33,39 @@ const htmlVerify = (name, link) => `
         </a>
       </p>
 
-      <p>This link will expire in 10 minutes.</p>
+      <p>This link expires in 10 minutes.</p>
     </div>
   </body>
   </html>
 `;
 
 // ======================================================================
-// BACKEND WAKE-UP
+// BACKEND HEALTH CHECK
 // ======================================================================
 router.get("/ping", (req, res) => res.json({ status: "ok" }));
+
+// ======================================================================
+// GET /auth/me
+// ======================================================================
+router.get("/me", async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ message: "Invalid token" });
+
+    const r = await pool.query(
+      `SELECT id, full_name, email, role, is_verified
+       FROM users WHERE id=$1 LIMIT 1`,
+      [userId]
+    );
+
+    if (r.rowCount === 0)
+      return res.status(401).json({ message: "User not found" });
+
+    res.json({ user: r.rows[0] });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 // ======================================================================
 // REGISTER
@@ -83,13 +106,13 @@ router.post("/register", async (req, res) => {
 
     const verifyLink = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
 
-    // SEND MAIL VIA RESEND
+    // SEND VERIFICATION EMAIL USING RESEND
     resend.emails.send({
       from: "CBT Master <noreply@cbt-master.com.ng>",
       to: email,
       subject: "Verify your CBT-Master account",
       html: htmlVerify(full_name, verifyLink),
-    }).catch(err => console.error("RESEND ERROR:", err));
+    }).catch(err => console.error("RESEND REGISTER ERROR:", err));
 
     return res.status(201).json({
       message: "Account created. Check your email to verify.",
@@ -174,6 +197,7 @@ router.post("/login", async (req, res) => {
 
       const verifyLink = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
 
+      // RESEND EMAIL FOR LOGIN VERIFICATION
       resend.emails.send({
         from: "CBT Master <noreply@cbt-master.com.ng>",
         to: email,
