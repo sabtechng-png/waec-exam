@@ -14,6 +14,7 @@ process.env.TZ = "UTC";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const BCRYPT_ROUNDS = 8;
+console.log(">>> AUTH ROUTE VERSION: RESEND v1 <<<");
 
 // ======================================================================
 // EMAIL TEMPLATE
