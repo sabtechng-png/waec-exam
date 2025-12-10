@@ -1,5 +1,5 @@
 // ======================================================================
-//                AUTH ROUTES — RESEND EMAIL FOR VERIFICATION ONLY
+// AUTH ROUTES — RESEND EMAIL FOR VERIFICATION ONLY (FINAL VERSION)
 // ======================================================================
 
 const express = require("express");
@@ -20,55 +20,16 @@ const BCRYPT_ROUNDS = 8;
 // ======================================================================
 const htmlVerify = (name, link) => `
   <html>
-  <body style="font-family: Arial; background:#f6f6f6; padding:20px;">
-    <div style="max-width:550px; margin:auto; background:white; padding:20px; border-radius:8px;">
-      <h2 style="color:#0d6efd;">Verify Your CBT-Master Account</h2>
-      <p>Hello <b>${name}</b>,</p>
-      <p>Click the button below to verify your email:</p>
-
-      <p style="text-align:center;">
-        <a href="${link}"
-           style="background:#0d6efd;color:white;padding:12px 25px;border-radius:6px;text-decoration:none;">
-          Verify Email
-        </a>
-      </p>
-
-      <p>This link expires in 10 minutes.</p>
-    </div>
+  <body>
+    <h2>Verify Your CBT-Master Account</h2>
+    <p>Hello <b>${name}</b>,</p>
+    <p>Click the link below to verify your email:</p>
+    <p><a href="${link}">Verify Email</a></p>
+    <p>This link expires in 10 minutes.</p>
   </body>
   </html>
 `;
 
-// ======================================================================
-// BACKEND HEALTH CHECK
-// ======================================================================
-router.get("/ping", (req, res) => res.json({ status: "ok" }));
-
-// ======================================================================
-// GET /auth/me
-// ======================================================================
-router.get("/me", async (req, res) => {
-  try {
-    const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ message: "Invalid token" });
-
-    const r = await pool.query(
-      `SELECT id, full_name, email, role, is_verified
-       FROM users WHERE id=$1 LIMIT 1`,
-      [userId]
-    );
-
-    if (r.rowCount === 0)
-      return res.status(401).json({ message: "User not found" });
-
-    res.json({ user: r.rows[0] });
-  } catch (err) {
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-// ======================================================================
-// REGISTER
 // ======================================================================
 router.post("/register", async (req, res) => {
   try {
@@ -93,7 +54,6 @@ router.post("/register", async (req, res) => {
       [full_name, email, passwordHash]
     );
 
-    // Generate token
     const token = crypto.randomBytes(32).toString("hex");
 
     await pool.query(
@@ -106,7 +66,7 @@ router.post("/register", async (req, res) => {
 
     const verifyLink = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
 
-    // SEND VERIFICATION EMAIL USING RESEND
+    // SEND EMAIL WITH RESEND
     resend.emails.send({
       from: "CBT Master <noreply@cbt-master.com.ng>",
       to: email,
@@ -118,14 +78,13 @@ router.post("/register", async (req, res) => {
       message: "Account created. Check your email to verify.",
       email,
     });
+
   } catch (err) {
     console.error("REGISTER ERROR:", err);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error" });
   }
 });
 
-// ======================================================================
-// VERIFY EMAIL
 // ======================================================================
 router.post("/verify-email", async (req, res) => {
   try {
@@ -158,7 +117,7 @@ router.post("/verify-email", async (req, res) => {
       [user.email]
     );
 
-    return res.json({ message: "Email verified successfully!" });
+    return res.json({ message: "Email verified successfully!", email: user.email });
 
   } catch (err) {
     console.error("VERIFY ERROR:", err);
@@ -166,8 +125,6 @@ router.post("/verify-email", async (req, res) => {
   }
 });
 
-// ======================================================================
-// LOGIN
 // ======================================================================
 router.post("/login", async (req, res) => {
   try {
@@ -197,7 +154,6 @@ router.post("/login", async (req, res) => {
 
       const verifyLink = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
 
-      // RESEND EMAIL FOR LOGIN VERIFICATION
       resend.emails.send({
         from: "CBT Master <noreply@cbt-master.com.ng>",
         to: email,
@@ -205,13 +161,13 @@ router.post("/login", async (req, res) => {
         html: htmlVerify(user.full_name, verifyLink),
       }).catch(err => console.error("RESEND LOGIN ERROR:", err));
 
-      return res.status(403).json({
-        message: "Email not verified. Verification link resent.",
-        email,
-      });
+      return res
+        .status(403)
+        .json({ message: "Email not verified. Verification link resent.", email });
     }
 
     const valid = await bcrypt.compare(password, user.password_hash);
+
     if (!valid)
       return res.status(401).json({ message: "Incorrect email or password" });
 
@@ -223,12 +179,7 @@ router.post("/login", async (req, res) => {
 
     delete user.password_hash;
 
-    return res.json({
-      success: true,
-      message: "Login successful",
-      user,
-      token,
-    });
+    return res.json({ success: true, user, token });
 
   } catch (err) {
     console.error("LOGIN ERROR:", err);
